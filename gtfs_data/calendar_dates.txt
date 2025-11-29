@@ -1,0 +1,15 @@
+service_id,date,holiday_name,exception_type
+c_71628_b_none_d_0,20260216,President's Day,1
+c_71628_b_none_d_0,20260119,MLK Jr Day,1
+c_71628_b_none_d_0,20251224,Christmas Eve,1
+c_71628_b_none_d_0,20251128,Day after Thanksgiving,1
+c_71306_b_84949_d_96,20260101,New Year's Day - Weekend Service,1
+c_71306_b_84949_d_96,20251225,Christmas - Weekend Service,1
+c_71306_b_84949_d_96,20251127,Thanksgiving Day - Weekend Service,1
+c_71306_b_84949_d_31,20260216,President's Day,2
+c_71306_b_84949_d_31,20260119,MLK Jr Day,2
+c_71306_b_84949_d_31,20260101,New Year's Day - Weekend Service,2
+c_71306_b_84949_d_31,20251225,Christmas - Weekend Service,2
+c_71306_b_84949_d_31,20251224,Christmas Eve,2
+c_71306_b_84949_d_31,20251128,Day after Thanksgiving,2
+c_71306_b_84949_d_31,20251127,Thanksgiving Day - Weekend Service,2
