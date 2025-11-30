@@ -1,7 +1,5 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import scheduleData from '@/lib/schedule-data.json';
-import tripStopsData from '@/lib/trip-stops-data.json';
 import { CaltrainResponse, TrainPrediction } from '@/lib/types';
 import { differenceInMinutes, format } from 'date-fns';
 
@@ -23,6 +21,12 @@ export async function GET(request: NextRequest) {
     const url = `https://www.caltrain.com/gtfs/stops/${stationUrlName}/predictions`;
 
     try {
+        // Dynamically import JSON data for Cloudflare Workers compatibility
+        const [scheduleDataModule, tripStopsDataModule] = await Promise.all([
+            import('@/lib/schedule-data.json').then(m => m.default),
+            import('@/lib/trip-stops-data.json').then(m => m.default)
+        ]);
+
         const response = await fetch(url, {
             cache: 'no-store' // Disable caching during development/debugging
         });
@@ -33,8 +37,8 @@ export async function GET(request: NextRequest) {
 
         const json: CaltrainResponse = await response.json();
         const predictions: TrainPrediction[] = [];
-        const schedule = scheduleData as Record<string, Record<string, string>>;
-        const tripStops = tripStopsData as Record<string, string[]>;
+        const schedule = scheduleDataModule as Record<string, Record<string, string>>;
+        const tripStops = tripStopsDataModule as Record<string, string[]>;
 
         json.data.forEach((entry) => {
             entry.predictions.forEach((prediction) => {
