@@ -14,19 +14,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrackTrain - Real-Time Caltrain Tracker",
-  description: "Track Caltrain arrivals in real-time with live train positions, delay notifications, and accurate predictions. See scheduled vs actual times at a glance.",
-  keywords: ["Caltrain", "train tracker", "real-time", "Bay Area transit", "GTFS", "train schedule", "delays"],
-  authors: [{ name: "TrackTrain" }],
+  title: "RailTime - Real-Time Caltrain Tracker",
+  description: "Real-time Caltrain tracking with live train positions, accurate predictions, and beautiful visualizations. Know exactly when your train arrives.",
+  keywords: ["Caltrain", "train tracker", "real-time", "Bay Area transit", "GTFS", "train schedule", "delays", "RailTime"],
+  authors: [{ name: "RailTime", url: "https://github.com/theGreatHeisenberg/railtime" }],
+  creator: "Shreyas Panhalkar",
+  icons: {
+    icon: "/favicon.svg",
+  },
   openGraph: {
-    title: "TrackTrain - Real-Time Caltrain Tracker",
-    description: "Track Caltrain arrivals in real-time with live train positions and delay notifications",
+    title: "RailTime - Real-Time Caltrain Tracker",
+    description: "Real-time Caltrain tracking with live positions and accurate arrival predictions",
     type: "website",
+    url: "https://github.com/theGreatHeisenberg/railtime",
+    siteName: "RailTime",
   },
   twitter: {
     card: "summary_large_image",
-    title: "TrackTrain - Real-Time Caltrain Tracker",
-    description: "Track Caltrain arrivals in real-time with live train positions and delay notifications",
+    title: "RailTime - Real-Time Caltrain Tracker",
+    description: "Real-time Caltrain tracking with live positions and accurate arrival predictions",
+    creator: "@theGreatHeisenberg",
   },
   viewport: "width=device-width, initial-scale=1",
   themeColor: "#0f172a",
