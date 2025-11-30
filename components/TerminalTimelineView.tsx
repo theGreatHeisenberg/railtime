@@ -207,7 +207,12 @@ export default function TerminalTimelineView({
 
                     // Calculate relative time display
                     let relativeTimeStr = "";
-                    if (isPassed) {
+                    // Only show PASSED if we have vehicle position data (trainProgress > 0 or < 1)
+                    if (isPassed && vehiclePosition) {
+                        // Station has been passed, show PASSED instead of ETA
+                        relativeTimeStr = "PASSED";
+                    } else if (eta.relativeMinutes < 0) {
+                        // Fallback: ETA indicates it's in the past
                         relativeTimeStr = "PASSED";
                     } else if (eta.relativeMinutes === 0) {
                         relativeTimeStr = "NOW";
