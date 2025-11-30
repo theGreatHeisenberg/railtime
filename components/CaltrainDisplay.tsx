@@ -200,23 +200,145 @@ export default function CaltrainDisplay() {
     const [stationSelectorOpen, setStationSelectorOpen] = useState(false);
 
     return (
-        <div className={`min-h-screen ${theme.colors.bg.primary} transition-colors duration-500`}>
-            <div className="max-w-6xl mx-auto p-4 space-y-4">
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img src="/railtime-logo.svg" alt="RailTime" className="h-10 w-10" />
-                        <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
-                            RailTime
-                        </h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className={`text-sm ${theme.colors.text.muted}`}>
-                            {lastUpdated && `Updated: ${lastUpdated.toLocaleTimeString()}`}
+        <div className={`min-h-screen bg-black transition-colors duration-500`}>
+            <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-6 font-mono">
+                {/* TERMINAL HEADER WITH NEON GLOW */}
+                <div className="space-y-4">
+                    <div className="border-l-4 border-cyan-400 pl-4 py-2 bg-cyan-950/20">
+                        <div className={`text-3xl font-bold text-cyan-300 animate-pulse`} style={{textShadow: '0 0 10px rgba(34, 211, 238, 0.8)'}}>
+                            ▸ RAILTIME ▸
                         </div>
-                        <ThemeSwitcher />
-                        <SettingsModal stations={stations} />
+                        <div className="text-xs text-cyan-400 mt-1 tracking-widest">
+                            real-time caltrain monitoring system v1.0
+                        </div>
                     </div>
+
+                    <div className="flex items-center justify-between text-xs px-2">
+                        <span className="text-green-400">[SYSTEM ACTIVE]</span>
+                        <span className="text-cyan-400">
+                            {lastUpdated && `LAST UPDATE: ${lastUpdated.toLocaleTimeString()}`}
+                        </span>
+                        <div className="flex gap-2">
+                            <ThemeSwitcher />
+                        </div>
+                    </div>
+
+                    <div className="border border-cyan-500/50 border-dashed"></div>
                 </div>
+
+                {/* ROUTE CONFIG PANEL */}
+                <div className="space-y-2">
+                    <div className="text-cyan-400 text-xs font-bold tracking-widest">
+                        ╔═══ ROUTE CONFIGURATION ═══╗
+                    </div>
+                    <div className="border-l-2 border-pink-500 pl-3 py-2 bg-pink-950/10">
+                        <div
+                            className="flex items-center justify-between cursor-pointer hover:bg-pink-950/20 px-2 py-1 transition-colors"
+                            onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
+                        >
+                            <span className="text-pink-400 font-bold">
+                                ► {origin} {destination && destination !== "All" && `→ ${destination}`}
+                            </span>
+                            <span className="text-green-400 text-xs">
+                                [{stationSelectorOpen ? "▼" : "▶"}]
+                            </span>
+                        </div>
+                    </div>
+
+                    {stationSelectorOpen && (
+                        <div className="space-y-2 mt-2 p-3 bg-black border border-pink-500/40">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-green-400 text-xs tracking-widest">ORIGIN_STATION</label>
+                                    <Select value={origin} onValueChange={setOrigin}>
+                                        <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                            <SelectValue placeholder=">" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                            {stations.map((s) => (
+                                                <SelectItem key={s.stopname} value={s.stopname}>
+                                                    {s.stopname}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-1">
+                                    <label className="text-green-400 text-xs tracking-widest">DESTINATION</label>
+                                    <Select value={destination} onValueChange={setDestination}>
+                                        <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                            <SelectValue placeholder=">" />
+                                        </SelectTrigger>
+                                        <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                            <SelectItem value="All">[ all ]</SelectItem>
+                                            {stations
+                                                .filter((s) => s.stopname !== origin)
+                                                .map((s) => (
+                                                    <SelectItem key={s.stopname} value={s.stopname}>
+                                                        {s.stopname}
+                                                    </SelectItem>
+                                                ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <Button
+                                onClick={loadAllData}
+                                className="bg-black border border-green-500/50 text-green-400 hover:bg-green-950/30 h-7 text-xs font-mono w-full"
+                            >
+                                {loading ? "█ SCANNING..." : "▶ REFRESH"}
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                {/* NEXT TRAIN ALERT */}
+                {nextTrain && (
+                    <div className="space-y-2">
+                        <div className="text-green-400 text-xs font-bold tracking-widest">
+                            ╔═══ INCOMING TRAIN ALERT ═══╗
+                        </div>
+                        <div className="border-2 border-green-500 p-3 bg-green-950/20" style={{boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'}}>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                <div>
+                                    <div className="text-green-500 text-xs uppercase tracking-wider">Train ID</div>
+                                    <div className="text-yellow-300 text-2xl font-bold">#{nextTrain.TrainNumber}</div>
+                                </div>
+                                <div>
+                                    <div className="text-green-500 text-xs uppercase tracking-wider">Type</div>
+                                    <div className="text-cyan-300 text-lg">{nextTrain.TrainType}</div>
+                                </div>
+                                <div>
+                                    <div className="text-green-500 text-xs uppercase tracking-wider">Departure</div>
+                                    <div className="text-yellow-300 text-lg">{nextTrain.Departure}</div>
+                                </div>
+                                <div>
+                                    <div className="text-green-500 text-xs uppercase tracking-wider">ETA</div>
+                                    <div className="text-pink-400 text-lg font-bold animate-pulse" style={{textShadow: '0 0 10px rgba(244, 63, 94, 0.8)'}}>
+                                        {nextTrain.ETA}
+                                    </div>
+                                </div>
+                                {nextTrain.delayStatus && (
+                                    <div>
+                                        <div className="text-green-500 text-xs uppercase tracking-wider">Status</div>
+                                        <div className={`text-sm font-bold ${
+                                            nextTrain.delayStatus === "on-time" ? "text-green-400" :
+                                            nextTrain.delayStatus === "delayed" ? "text-red-400" : "text-cyan-400"
+                                        }`}>
+                                            {nextTrain.delayStatus === "on-time" ? "OK" :
+                                             nextTrain.delayStatus === "delayed" ? `+${nextTrain.delayMinutes}m` :
+                                             `−${Math.abs(nextTrain.delayMinutes!)}m`}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="border border-cyan-500/30 border-dashed"></div>
 
                 {/* STATION SELECTION - Collapsible at top */}
                 <Card className={`${theme.colors.bg.card} ${theme.colors.text.primary} border ${theme.colors.ui.border}`}>
@@ -428,21 +550,18 @@ export default function CaltrainDisplay() {
                     </div>
                 )}
 
-                {/* GitHub Footer Badge */}
-                <div className={`text-center py-4 px-4 border-t ${theme.colors.ui.border} ${theme.colors.bg.secondary} rounded-lg`}>
+                {/* TERMINAL FOOTER */}
+                <div className="border-t border-cyan-500/30 pt-4 text-center space-y-1">
                     <a
                         href="https://github.com/theGreatHeisenberg/railtime"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${theme.colors.ui.hover} border ${theme.colors.ui.border}`}
+                        className="text-cyan-400 text-xs hover:text-pink-400 transition-colors font-mono tracking-widest"
                     >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.343-3.369-1.343-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.544 2.914 1.19.092-.926.35-1.546.636-1.903-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.578.688.48C17.137 18.194 20 14.44 20 10.017 20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className={`${theme.colors.text.primary}`}>Star on GitHub</span>
+                        {`> github.com/theGreatHeisenberg/railtime`}
                     </a>
-                    <p className={`text-xs ${theme.colors.text.muted} mt-2`}>
-                        Open source real-time Caltrain tracker
+                    <p className="text-green-600 text-xs font-mono">
+                        [OPEN_SOURCE] [REAL-TIME] [MONITORING]
                     </p>
                 </div>
             </div>
