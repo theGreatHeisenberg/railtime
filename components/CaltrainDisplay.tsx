@@ -17,16 +17,26 @@ import { RefreshCw, Train } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import SettingsModal from "./SettingsModal";
-import TrainApproachView from "./TrainApproachView";
+import TrainApproachViewSelector from "./TrainApproachViewSelector";
+import TrainSummary from "./TrainSummary";
+import ThemeSwitcher from "./ThemeSwitcher";
+import { fetchVehiclePositions } from "@/lib/caltrain";
+import { useTheme } from "@/lib/ThemeContext";
+import { calculateStationETAs, getTrainETAFromPredictions } from "@/lib/etaCalculations";
 
 export default function CaltrainDisplay() {
+    const { theme } = useTheme();
     const [stations, setStations] = useState<Station[]>([]);
     const [origin, setOrigin] = useState<string>("");
     const [destination, setDestination] = useState<string>("");
     const [predictions, setPredictions] = useState<TrainPrediction[]>([]);
+    const [destinationPredictions, setDestinationPredictions] = useState<TrainPrediction[]>([]);
+    const [vehiclePositions, setVehiclePositions] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
+    const [currentTime, setCurrentTime] = useState<Date>(new Date());
+    const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
 
     useEffect(() => {
         fetchStations().then((data) => {
@@ -56,23 +66,52 @@ export default function CaltrainDisplay() {
         });
     }, []);
 
-    const loadPredictions = async () => {
-        if (!origin) return;
+    // Unified data fetch - fetches everything every 10 seconds
+    const loadAllData = async () => {
+        if (!origin || stations.length === 0) return;
+
         setLoading(true);
-        const station = stations.find((s) => s.stopname === origin);
-        if (station) {
-            const preds = await fetchPredictions(station);
-            setPredictions(preds);
-            setLastUpdated(new Date());
+        const now = new Date();
+
+        try {
+            // Fetch origin predictions
+            const originStation = stations.find((s) => s.stopname === origin);
+            if (originStation) {
+                const originPreds = await fetchPredictions(originStation);
+                setPredictions(originPreds);
+            }
+
+            // Fetch destination predictions
+            if (destination && destination !== "All") {
+                const destStation = stations.find((s) => s.stopname === destination);
+                if (destStation) {
+                    const destPreds = await fetchPredictions(destStation);
+                    setDestinationPredictions(destPreds);
+                }
+            } else {
+                setDestinationPredictions([]);
+            }
+
+            // Fetch vehicle positions
+            const positions = await fetchVehiclePositions();
+            setVehiclePositions(positions);
+
+            // Update time in sync with data fetch
+            setCurrentTime(now);
+            setLastUpdated(now);
+        } catch (error) {
+            console.error("Error fetching data:", error);
         }
+
         setLoading(false);
     };
 
+    // Initial load and set up unified 10-second refresh interval
     useEffect(() => {
-        loadPredictions();
-        const interval = setInterval(loadPredictions, 60000); // Auto refresh every minute
+        loadAllData();
+        const interval = setInterval(loadAllData, 10000); // Refresh every 10 seconds
         return () => clearInterval(interval);
-    }, [origin]);
+    }, [origin, destination, stations]);
 
     // Determine journey direction if destination is selected
     let journeyDirection: "NB" | "SB" | null = null;
@@ -120,96 +159,124 @@ export default function CaltrainDisplay() {
         }
     }, [filteredPredictions]);
 
+    // Calculate station ETAs whenever data changes
+    useEffect(() => {
+        if (selectedTrain && origin && stations.length > 0 && predictions.length > 0) {
+            const etaMap = calculateStationETAs(
+                selectedTrain,
+                origin,
+                destination !== "All" ? destination : undefined,
+                stations,
+                predictions,
+                destinationPredictions,
+                currentTime
+            );
+            // Convert Map to Record for React state
+            const etaRecord: Record<string, { etaMinutes: number; arrivalTime: string }> = {};
+            etaMap.forEach((value, key) => {
+                etaRecord[key] = value;
+            });
+            setStationETAMap(etaRecord);
+        }
+    }, [selectedTrain, origin, destination, stations, predictions, destinationPredictions, currentTime]);
+
     // Get the next train (first in filtered list)
     const nextTrain = filteredPredictions[0];
+
+    // Helper to get ETA for a specific train to destination
+    const getTrainETA = (train: TrainPrediction, preds: TrainPrediction[]): number => {
+        return getTrainETAFromPredictions(train, preds);
+    };
 
     const [stationSelectorOpen, setStationSelectorOpen] = useState(false);
 
     return (
-        <div className="max-w-6xl mx-auto p-4 space-y-4">
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                <h1 className="text-3xl font-bold flex items-center gap-2">
-                    <Train className="h-8 w-8" /> TrackTrain
-                </h1>
-                <div className="flex items-center gap-4">
-                    <div className="text-sm text-muted-foreground">
-                        {lastUpdated && `Updated: ${lastUpdated.toLocaleTimeString()}`}
-                    </div>
-                    <SettingsModal stations={stations} />
-                </div>
-            </div>
-
-            {/* STATION SELECTION - Collapsible at top */}
-            <Card className="bg-slate-900 text-slate-50 border-slate-800">
-                <CardHeader
-                    className="cursor-pointer hover:bg-slate-800/50 transition-colors py-3"
-                    onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
-                >
-                    <CardTitle className="text-lg flex items-center justify-between">
-                        <span>
-                            {origin} {destination && destination !== "All" && `→ ${destination}`}
-                        </span>
-                        <Button variant="ghost" size="sm" className="h-8">
-                            {stationSelectorOpen ? "Hide" : "Change"}
-                        </Button>
-                    </CardTitle>
-                </CardHeader>
-                {stationSelectorOpen && (
-                    <CardContent className="flex flex-col md:flex-row gap-4 pt-0">
-                        <div className="flex-1 space-y-2">
-                            <label className="text-sm font-medium text-slate-400">Origin</label>
-                            <Select value={origin} onValueChange={setOrigin}>
-                                <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
-                                    <SelectValue placeholder="Select Origin" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
-                                    {stations.map((s) => (
-                                        <SelectItem key={s.stopname} value={s.stopname}>
-                                            {s.stopname}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+        <div className={`min-h-screen ${theme.colors.bg.primary} transition-colors duration-500`}>
+            <div className="max-w-6xl mx-auto p-4 space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                    <h1 className={`text-3xl font-bold flex items-center gap-2 ${theme.colors.text.primary}`}>
+                        <Train className="h-8 w-8" /> TrackTrain
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        <div className={`text-sm ${theme.colors.text.muted}`}>
+                            {lastUpdated && `Updated: ${lastUpdated.toLocaleTimeString()}`}
                         </div>
+                        <ThemeSwitcher />
+                        <SettingsModal stations={stations} />
+                    </div>
+                </div>
 
-                        <div className="flex-1 space-y-2">
-                            <label className="text-sm font-medium text-slate-400">
-                                Destination (Optional)
-                            </label>
-                            <Select value={destination} onValueChange={setDestination}>
-                                <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
-                                    <SelectValue placeholder="Select Destination" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700 text-slate-100">
-                                    <SelectItem value="All">All Destinations</SelectItem>
-                                    {stations
-                                        .filter((s) => s.stopname !== origin)
-                                        .map((s) => (
+                {/* STATION SELECTION - Collapsible at top */}
+                <Card className={`${theme.colors.bg.card} ${theme.colors.text.primary} border ${theme.colors.ui.border}`}>
+                    <CardHeader
+                        className={`cursor-pointer ${theme.colors.ui.hover} transition-colors py-3`}
+                        onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
+                    >
+                        <CardTitle className="text-lg flex items-center justify-between">
+                            <span>
+                                {origin} {destination && destination !== "All" && `→ ${destination}`}
+                            </span>
+                            <Button variant="ghost" size="sm" className="h-8">
+                                {stationSelectorOpen ? "Hide" : "Change"}
+                            </Button>
+                        </CardTitle>
+                    </CardHeader>
+                    {stationSelectorOpen && (
+                        <CardContent className="flex flex-col md:flex-row gap-4 pt-0">
+                            <div className="flex-1 space-y-2">
+                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>Origin</label>
+                                <Select value={origin} onValueChange={setOrigin}>
+                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                        <SelectValue placeholder="Select Origin" />
+                                    </SelectTrigger>
+                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                        {stations.map((s) => (
                                             <SelectItem key={s.stopname} value={s.stopname}>
                                                 {s.stopname}
                                             </SelectItem>
                                         ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-                        <div className="flex items-end">
-                            <Button
-                                onClick={loadPredictions}
-                                variant="outline"
-                                className="bg-slate-800 border-slate-700 text-slate-100 hover:bg-slate-700 w-full md:w-auto"
-                            >
-                                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                                Refresh
-                            </Button>
-                        </div>
-                    </CardContent>
-                )}
-            </Card>
+                            <div className="flex-1 space-y-2">
+                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>
+                                    Destination (Optional)
+                                </label>
+                                <Select value={destination} onValueChange={setDestination}>
+                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                        <SelectValue placeholder="Select Destination" />
+                                    </SelectTrigger>
+                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                        <SelectItem value="All">All Destinations</SelectItem>
+                                        {stations
+                                            .filter((s) => s.stopname !== origin)
+                                            .map((s) => (
+                                                <SelectItem key={s.stopname} value={s.stopname}>
+                                                    {s.stopname}
+                                                </SelectItem>
+                                            ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
 
-            {/* NEXT TRAIN BANNER - Compact and stylish */}
-            {nextTrain && (
-                <Card className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border-yellow-500/30 shadow-lg">
+                            <div className="flex items-end">
+                                <Button
+                                    onClick={loadAllData}
+                                    variant="outline"
+                                    className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} w-full md:w-auto`}
+                                >
+                                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+                                    Refresh
+                                </Button>
+                            </div>
+                        </CardContent>
+                    )}
+                </Card>
+
+                {/* NEXT TRAIN BANNER - Compact and stylish */}
+                {nextTrain && (
+                    <Card className={`bg-gradient-to-r ${theme.gradients.main} border ${theme.colors.ui.border} ${theme.colors.shadow}`}>
                     <CardContent className="p-4">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
@@ -255,41 +322,70 @@ export default function CaltrainDisplay() {
                         </div>
                     </CardContent>
                 </Card>
-            )}
-
-            {/* Train Approach View - Replaces Live Map */}
-            {selectedTrain && (
-                <div className="animate-in slide-in-from-top-10 fade-in duration-500">
-                    <TrainApproachView
-                        train={selectedTrain}
-                        origin={origin}
-                        stations={stations}
-                        onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
-                    />
-                </div>
-            )}
-
-            <div className={`grid gap-6 ${journeyDirection ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
-                {/* Show Northbound if direction is NB or null (All) */}
-                {(!journeyDirection || journeyDirection === "NB") && (
-                    <PredictionBoard
-                        title="Northbound"
-                        predictions={nbPredictions}
-                        loading={loading}
-                        onSelectTrain={setSelectedTrain}
-                        selectedTrainId={selectedTrain?.TrainNumber}
-                    />
                 )}
 
-                {/* Show Southbound if direction is SB or null (All) */}
-                {(!journeyDirection || journeyDirection === "SB") && (
-                    <PredictionBoard
-                        title="Southbound"
-                        predictions={sbPredictions}
-                        loading={loading}
-                        onSelectTrain={setSelectedTrain}
-                        selectedTrainId={selectedTrain?.TrainNumber}
-                    />
+                {/* Tabular View - Train Predictions Grid */}
+                <div className={`grid gap-6 ${journeyDirection ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
+                    {/* Show Northbound if direction is NB or null (All) */}
+                    {(!journeyDirection || journeyDirection === "NB") && (
+                        <PredictionBoard
+                            title="Northbound"
+                            predictions={nbPredictions}
+                            loading={loading}
+                            onSelectTrain={setSelectedTrain}
+                            selectedTrainId={selectedTrain?.TrainNumber}
+                        />
+                    )}
+
+                    {/* Show Southbound if direction is SB or null (All) */}
+                    {(!journeyDirection || journeyDirection === "SB") && (
+                        <PredictionBoard
+                            title="Southbound"
+                            predictions={sbPredictions}
+                            loading={loading}
+                            onSelectTrain={setSelectedTrain}
+                            selectedTrainId={selectedTrain?.TrainNumber}
+                        />
+                    )}
+                </div>
+
+                {/* Train Approach View - With Selector for Multiple Views */}
+                {selectedTrain && (
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
+                        <TrainApproachViewSelector
+                            train={selectedTrain}
+                            origin={origin}
+                            stations={stations}
+                            destination={destination !== "All" ? destination : undefined}
+                            onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
+                            vehiclePositions={vehiclePositions}
+                            currentTime={currentTime}
+                            originPredictions={predictions}
+                            destinationPredictions={destinationPredictions}
+                            loading={loading}
+                            stationETAMap={stationETAMap}
+                        />
+                    </div>
+                )}
+
+                {/* Train Summary - Visible After Progress/Horizontal Views */}
+                {selectedTrain && (
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
+                        <TrainSummary
+                            train={selectedTrain}
+                            origin={origin}
+                            destination={destination !== "All" ? destination : undefined}
+                            etaToOriginMinutes={getTrainETA(selectedTrain, predictions)}
+                            etaToDestinationMinutes={
+                                destination && destination !== "All"
+                                    ? getTrainETA(selectedTrain, destinationPredictions)
+                                    : 0
+                            }
+                            trainReachedOrigin={false}
+                            stations={stations}
+                            currentTime={currentTime}
+                        />
+                    </div>
                 )}
             </div>
         </div>
