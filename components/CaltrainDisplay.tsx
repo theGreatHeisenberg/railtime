@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
 import { Station, TrainPrediction } from "@/lib/types";
 import { fetchStations, fetchPredictions } from "@/lib/caltrain";
 import {
@@ -527,7 +527,7 @@ interface TerminalPredictionTableProps {
     recentlyPassedTrainId?: string;
 }
 
-function TerminalPredictionTable({
+const TerminalPredictionTable = memo(function TerminalPredictionTable({
     predictions,
     loading,
     onSelectTrain,
@@ -552,11 +552,11 @@ function TerminalPredictionTable({
 
     return (
         <div className="space-y-1">
-            {predictions.slice(0, 10).map((p) => {
+            {predictions.slice(0, 10).map((p, idx) => {
                 const isPassed = recentlyPassedTrainId === p.TrainNumber;
                 return (
                 <div
-                    key={p.TrainNumber}
+                    key={`${p.TrainNumber}-${p.Direction}`}
                     onClick={() => onSelectTrain(p)}
                     className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${
                         selectedTrainId === p.TrainNumber
@@ -596,4 +596,4 @@ function TerminalPredictionTable({
             })}
         </div>
     );
-}
+});
