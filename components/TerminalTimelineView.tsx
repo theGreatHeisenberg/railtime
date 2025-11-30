@@ -207,7 +207,7 @@ export default function TerminalTimelineView({
 
                     // Calculate relative time display
                     let relativeTimeStr = "";
-                    if (eta.relativeMinutes < 0) {
+                    if (isPassed) {
                         relativeTimeStr = "PASSED";
                     } else if (eta.relativeMinutes === 0) {
                         relativeTimeStr = "NOW";

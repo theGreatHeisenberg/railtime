@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 import { Station, TrainPrediction } from "@/lib/types";
 import { fetchStations, fetchPredictions } from "@/lib/caltrain";
 import {
@@ -160,62 +160,76 @@ export default function CaltrainDisplay() {
     }, [origin, destination, stations]);
 
     // Determine journey direction if destination is selected
-    let journeyDirection: "NB" | "SB" | null = null;
-    if (destination && destination !== "All") {
-        const originStation = stations.find((s) => s.stopname === origin);
-        const destStation = stations.find((s) => s.stopname === destination);
+    const journeyDirection = useMemo(() => {
+        let direction: "NB" | "SB" | null = null;
+        if (destination && destination !== "All") {
+            const originStation = stations.find((s) => s.stopname === origin);
+            const destStation = stations.find((s) => s.stopname === destination);
 
-        if (originStation && destStation) {
-            const originId = parseInt(originStation.stop1);
-            const destId = parseInt(destStation.stop1);
-            journeyDirection = originId < destId ? "SB" : "NB";
+            if (originStation && destStation) {
+                const originId = parseInt(originStation.stop1);
+                const destId = parseInt(destStation.stop1);
+                direction = originId < destId ? "SB" : "NB";
+            }
         }
-    }
+        return direction;
+    }, [destination, origin, stations]);
 
-    const filteredPredictions = predictions.filter((p) => {
-        if (!destination || destination === "All") return true;
+    const filteredPredictions = useMemo(() => {
+        return predictions.filter((p) => {
+            if (!destination || destination === "All") return true;
 
-        const originStation = stations.find((s) => s.stopname === origin);
-        const destStation = stations.find((s) => s.stopname === destination);
+            const originStation = stations.find((s) => s.stopname === origin);
+            const destStation = stations.find((s) => s.stopname === destination);
 
-        if (!originStation || !destStation) return true;
+            if (!originStation || !destStation) return true;
 
-        // 1. Direction Check
-        if (journeyDirection && p.Direction !== journeyDirection) return false;
+            // 1. Direction Check
+            if (journeyDirection && p.Direction !== journeyDirection) return false;
 
-        // 2. Reachability Check - DISABLED
-        // The station-specific predictions API often only returns the prediction for the requested station,
-        // not the full list of future stops. This causes the reachability check to fail for all trains.
-        // We will rely on Direction filtering for now.
+            // 2. Reachability Check - DISABLED
+            // The station-specific predictions API often only returns the prediction for the requested station,
+            // not the full list of future stops. This causes the reachability check to fail for all trains.
+            // We will rely on Direction filtering for now.
 
-        return true;
-    });
+            return true;
+        });
+    }, [predictions, destination, origin, stations, journeyDirection]);
 
-    const nbPredictions = filteredPredictions.filter((p) => p.Direction === "NB");
-    const sbPredictions = filteredPredictions.filter((p) => p.Direction === "SB");
+    const { nbPredictions, sbPredictions } = useMemo(() => {
+        return {
+            nbPredictions: filteredPredictions.filter((p) => p.Direction === "NB"),
+            sbPredictions: filteredPredictions.filter((p) => p.Direction === "SB")
+        };
+    }, [filteredPredictions]);
 
     // Get recently passed train from state (tracked via localStorage)
-    // Create a mock train object with just the ID if we have a lastPassedTrainId
-    const recentlyPassedTrain = lastPassedTrainId
-        ? {
-            TrainNumber: lastPassedTrainId,
-            Direction: "NB", // Will be overridden by display logic
-            ETA: "PASSED",
-            Departure: "--:--",
-            TrainType: "",
-            delayStatus: "on-time",
-            delayMinutes: 0
-          } as TrainPrediction
-        : null;
+    const recentlyPassedTrain = useMemo(() => {
+        return lastPassedTrainId
+            ? {
+                TrainNumber: lastPassedTrainId,
+                Direction: "NB", // Will be overridden by display logic
+                ETA: "PASSED",
+                Departure: "--:--",
+                TrainType: "",
+                delayStatus: "on-time",
+                delayMinutes: 0
+              } as TrainPrediction
+            : null;
+    }, [lastPassedTrainId]);
 
     // Add recently passed train to display if it exists and not already in filtered list
-    const displayNBPredictions = recentlyPassedTrain && !nbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
-        ? [recentlyPassedTrain, ...nbPredictions]
-        : nbPredictions;
+    const displayNBPredictions = useMemo(() => {
+        return recentlyPassedTrain && !nbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
+            ? [recentlyPassedTrain, ...nbPredictions]
+            : nbPredictions;
+    }, [recentlyPassedTrain, nbPredictions]);
 
-    const displaySBPredictions = recentlyPassedTrain && !sbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
-        ? [recentlyPassedTrain, ...sbPredictions]
-        : sbPredictions;
+    const displaySBPredictions = useMemo(() => {
+        return recentlyPassedTrain && !sbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
+            ? [recentlyPassedTrain, ...sbPredictions]
+            : sbPredictions;
+    }, [recentlyPassedTrain, sbPredictions]);
 
     // Auto-select the first train when predictions update
     useEffect(() => {
