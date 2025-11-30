@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, memo } from "react";
 import { Station, TrainPrediction, VehiclePosition } from "@/lib/types";
 import { fetchVehiclePositions } from "@/lib/caltrain";
 import { Train, MapPin, Navigation, X, ArrowRight, ArrowLeft, Palette } from "lucide-react";
@@ -22,7 +22,11 @@ interface TrainApproachViewProps {
 
 type Theme = 'default' | 'cyberpunk' | 'midnight' | 'sunset';
 
-export default function TrainApproachView({ train, origin, stations, onClose }: TrainApproachViewProps) {
+/**
+ * Inner component for train approach visualization.
+ * Exported separately to allow wrapping with React.memo.
+ */
+function TrainApproachViewInner({ train, origin, stations, onClose }: TrainApproachViewProps) {
     const [vehiclePosition, setVehiclePosition] = useState<VehiclePosition | null>(null);
     const [now, setNow] = useState(new Date());
 
@@ -726,3 +730,42 @@ export default function TrainApproachView({ train, origin, stations, onClose }: 
         </Card>
     );
 }
+
+/**
+ * Memoized export with custom equality comparison.
+ *
+ * This prevents unnecessary re-renders when parent component updates but
+ * the train's core position/identity hasn't meaningfully changed.
+ * We only care about: train ID, position data, and origin/onClose handlers.
+ */
+export default memo(
+    TrainApproachViewInner,
+    (prevProps, nextProps) => {
+        // Return true if props are equal (NO re-render), false if different (DO re-render)
+
+        // Always re-render if origin or stations changed
+        if (prevProps.origin !== nextProps.origin) return false;
+        if (prevProps.stations.length !== nextProps.stations.length) return false;
+
+        // Check if train identity changed (different train number)
+        if (prevProps.train.TrainNumber !== nextProps.train.TrainNumber) return false;
+
+        // Check if train's critical position data changed
+        // (ETA, Direction, Type, etc. matter for rendering the UI)
+        const prevTrain = prevProps.train;
+        const nextTrain = nextProps.train;
+
+        if (prevTrain.ETA !== nextTrain.ETA) return false;
+        if (prevTrain.Direction !== nextTrain.Direction) return false;
+        if (prevTrain.TrainType !== nextTrain.TrainType) return false;
+        if (prevTrain.Departure !== nextTrain.Departure) return false;
+        if (prevTrain.delayStatus !== nextTrain.delayStatus) return false;
+        if (prevTrain.delayMinutes !== nextTrain.delayMinutes) return false;
+
+        // If onClose handler changed, that's fine - it's a function reference
+        // and doesn't affect the visual output
+
+        // All checks passed: props are effectively equal, skip re-render
+        return true;
+    }
+);

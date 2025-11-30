@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, memo, useMemo } from "react";
+import { useEffect, useState, memo, useMemo, useRef } from "react";
 import { Station, TrainPrediction } from "@/lib/types";
 import { fetchStations, fetchPredictions } from "@/lib/caltrain";
 import {
@@ -41,6 +41,7 @@ export default function CaltrainDisplay() {
     const [predictions, setPredictions] = useState<TrainPrediction[]>([]);
     const [destinationPredictions, setDestinationPredictions] = useState<TrainPrediction[]>([]);
     const [vehiclePositions, setVehiclePositions] = useState<any[]>([]);
+    const vehiclePositionsRef = useRef<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
@@ -119,9 +120,31 @@ export default function CaltrainDisplay() {
                 setDestinationPredictions([]);
             }
 
-            // Fetch vehicle positions
+            // Fetch vehicle positions and only update if data meaningfully changed
             const positions = await fetchVehiclePositions();
-            setVehiclePositions(positions);
+
+            // Check if positions actually changed to prevent unnecessary re-renders
+            const positionsChanged =
+                vehiclePositionsRef.current.length !== positions.length ||
+                vehiclePositionsRef.current.some((prevPos, idx) => {
+                    const nextPos = positions[idx];
+                    if (!nextPos) return true;
+                    // Compare only the fields that matter for rendering
+                    const prevVehicle = prevPos.Vehicle;
+                    const nextVehicle = nextPos.Vehicle;
+                    return (
+                        prevVehicle.Trip.TripId !== nextVehicle.Trip.TripId ||
+                        prevVehicle.Position.Latitude !== nextVehicle.Position.Latitude ||
+                        prevVehicle.Position.Longitude !== nextVehicle.Position.Longitude ||
+                        (prevVehicle.Position.Bearing !== nextVehicle.Position.Bearing)
+                    );
+                });
+
+            // Only update state if positions meaningfully changed
+            if (positionsChanged) {
+                vehiclePositionsRef.current = positions;
+                setVehiclePositions(positions);
+            }
 
             // Update last updated timestamp
             setLastUpdated(now);
