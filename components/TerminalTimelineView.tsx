@@ -222,7 +222,10 @@ export default function TerminalTimelineView({
                         relativeTimeStr = `in ${eta.relativeMinutes}m`;
                     }
 
-                    const statusIcon = isPassed
+                    // Only mark as passed if we have vehicle position data
+                    const isActuallyPassed = isPassed && vehiclePosition;
+
+                    const statusIcon = isActuallyPassed
                         ? isOrigin
                             ? "◀"
                             : "▲"
@@ -232,7 +235,7 @@ export default function TerminalTimelineView({
                         ? "◆"
                         : "○";
 
-                    const colorClass = isPassed
+                    const colorClass = isActuallyPassed
                         ? "text-green-600"
                         : isOrigin
                         ? "text-yellow-400"
@@ -242,7 +245,7 @@ export default function TerminalTimelineView({
                         <div key={station.stopname} className={`flex items-center justify-between py-0.5 px-1 border-l-2 ${
                             isOrigin ? "border-l-yellow-400 bg-yellow-950/20" :
                             isDestination ? "border-l-pink-400 bg-pink-950/20" :
-                            isPassed ? "border-l-green-500 bg-green-950/10" :
+                            isActuallyPassed ? "border-l-green-500 bg-green-950/10" :
                             "border-l-cyan-500/30"
                         }`}>
                             <div className="flex items-center gap-1 flex-1 min-w-0">
