@@ -44,7 +44,6 @@ export default function CaltrainDisplay() {
     const [loading, setLoading] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
-    const [currentTime, setCurrentTime] = useState<Date>(new Date());
     const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
     const [lastPassedTrainId, setLastPassedTrainId] = useState<string | null>(null);
 
@@ -124,8 +123,7 @@ export default function CaltrainDisplay() {
             const positions = await fetchVehiclePositions();
             setVehiclePositions(positions);
 
-            // Update time in sync with data fetch
-            setCurrentTime(now);
+            // Update last updated timestamp
             setLastUpdated(now);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -233,6 +231,7 @@ export default function CaltrainDisplay() {
     // Calculate station ETAs whenever data changes
     useEffect(() => {
         if (selectedTrain && origin && stations.length > 0 && predictions.length > 0) {
+            const currentTime = new Date();
             const etaMap = calculateStationETAs(
                 selectedTrain,
                 origin,
@@ -249,7 +248,7 @@ export default function CaltrainDisplay() {
             });
             setStationETAMap(etaRecord);
         }
-    }, [selectedTrain, origin, destination, stations, predictions, destinationPredictions, currentTime]);
+    }, [selectedTrain, origin, destination, stations, predictions, destinationPredictions]);
 
     // Get the next train (first in filtered list)
     const nextTrain = filteredPredictions[0];
@@ -465,7 +464,7 @@ export default function CaltrainDisplay() {
                                 destination={destination !== "All" ? destination : undefined}
                                 onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
                                 vehiclePositions={vehiclePositions}
-                                currentTime={currentTime}
+                                currentTime={new Date()}
                                 originPredictions={predictions}
                                 destinationPredictions={destinationPredictions}
                                 loading={loading}
@@ -494,7 +493,7 @@ export default function CaltrainDisplay() {
                                 }
                                 trainReachedOrigin={false}
                                 stations={stations}
-                                currentTime={currentTime}
+                                currentTime={new Date()}
                             />
                         </div>
                     </div>
