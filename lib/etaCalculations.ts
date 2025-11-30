@@ -29,11 +29,14 @@ export const getTrainETAFromPredictions = (
 export const getArrivalTime = (etaMinutes: number, currentTime: Date): string => {
   if (etaMinutes < 0) return "Loading...";
   const arrivalDate = new Date(currentTime.getTime() + etaMinutes * 60000);
-  return arrivalDate.toLocaleTimeString('en-US', {
+  // Format time in Pacific timezone
+  const options: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: true
-  });
+    hour12: true,
+    timeZone: 'America/Los_Angeles'
+  };
+  return arrivalDate.toLocaleTimeString('en-US', options);
 };
 
 /**

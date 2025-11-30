@@ -7,6 +7,8 @@ import { differenceInMinutes, format } from 'date-fns';
 
 // Force dynamic to prevent static optimization of this route
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -96,7 +98,14 @@ export async function GET(request: NextRequest) {
                     // If not found, we can try to strip non-numeric characters if needed, but for now exact match.
 
                     // If we found a scheduled time, use it. Otherwise, fallback to predicted time (formatted).
-                    const predictedTimeStr = format(date, "h:mm a");
+                    // Format time in Pacific timezone
+                    const options: Intl.DateTimeFormatOptions = {
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true,
+                        timeZone: 'America/Los_Angeles'
+                    };
+                    const predictedTimeStr = date.toLocaleTimeString('en-US', options);
                     if (!scheduledTime) {
                         scheduledTime = predictedTimeStr;
                     }
@@ -153,7 +162,11 @@ export async function GET(request: NextRequest) {
         // Sort by time
         predictions.sort((a, b) => a.timestamp - b.timestamp);
 
-        return NextResponse.json(predictions);
+        return NextResponse.json(predictions, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
+            }
+        });
 
     } catch (error) {
         console.error('API Route Error:', error);
