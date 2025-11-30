@@ -1,12 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import scheduleData from '@/lib/schedule-data.json';
+import tripStopsData from '@/lib/trip-stops-data.json';
 import { CaltrainResponse, TrainPrediction } from '@/lib/types';
 import { differenceInMinutes, format } from 'date-fns';
-
-// Force dynamic to prevent static optimization of this route
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-export const runtime = 'edge';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -21,15 +18,7 @@ export async function GET(request: NextRequest) {
     const url = `https://www.caltrain.com/gtfs/stops/${stationUrlName}/predictions`;
 
     try {
-        // Dynamically import JSON data for Cloudflare Workers compatibility
-        const [scheduleDataModule, tripStopsDataModule] = await Promise.all([
-            import('@/lib/schedule-data.json').then(m => m.default),
-            import('@/lib/trip-stops-data.json').then(m => m.default)
-        ]);
-
-        const response = await fetch(url, {
-            cache: 'no-store' // Disable caching during development/debugging
-        });
+        const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error(`Upstream API failed: ${response.status}`);
@@ -37,8 +26,8 @@ export async function GET(request: NextRequest) {
 
         const json: CaltrainResponse = await response.json();
         const predictions: TrainPrediction[] = [];
-        const schedule = scheduleDataModule as Record<string, Record<string, string>>;
-        const tripStops = tripStopsDataModule as Record<string, string[]>;
+        const schedule = scheduleData as Record<string, Record<string, string>>;
+        const tripStops = tripStopsData as Record<string, string[]>;
 
         json.data.forEach((entry) => {
             entry.predictions.forEach((prediction) => {
@@ -166,11 +155,7 @@ export async function GET(request: NextRequest) {
         // Sort by time
         predictions.sort((a, b) => a.timestamp - b.timestamp);
 
-        return NextResponse.json(predictions, {
-            headers: {
-                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0'
-            }
-        });
+        return NextResponse.json(predictions);
 
     } catch (error) {
         console.error('API Route Error:', error);
