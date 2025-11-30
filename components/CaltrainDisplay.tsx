@@ -201,192 +201,169 @@ export default function CaltrainDisplay() {
 
     return (
         <div className={`min-h-screen ${theme.colors.bg.primary} transition-colors duration-500`}>
-            <div className="max-w-6xl mx-auto p-4 space-y-4">
-                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <img src="/railtime-logo.svg" alt="RailTime" className="h-10 w-10" />
-                        <h1 className={`text-3xl font-bold ${theme.colors.text.primary}`}>
-                            RailTime
+            <div className="max-w-4xl mx-auto p-6 md:p-8 space-y-8">
+                {/* BRUTALIST HEADER */}
+                <div className="space-y-6">
+                    <div className="flex items-baseline justify-between gap-4 pb-4 border-b border-dashed ${theme.colors.ui.border}">
+                        <h1 className={`font-mono text-2xl tracking-tight ${theme.colors.text.primary}`}>
+                            railtime
                         </h1>
-                    </div>
-                    <div className="flex items-center gap-4">
-                        <div className={`text-sm ${theme.colors.text.muted}`}>
-                            {lastUpdated && `Updated: ${lastUpdated.toLocaleTimeString()}`}
+                        <div className="flex items-center gap-4">
+                            <div className={`font-mono text-xs ${theme.colors.text.muted}`}>
+                                {lastUpdated && lastUpdated.toLocaleTimeString()}
+                            </div>
+                            <ThemeSwitcher />
                         </div>
-                        <ThemeSwitcher />
-                        <SettingsModal stations={stations} />
+                    </div>
+
+                    {/* STATION SELECTION - Inline and minimal */}
+                    <div className="space-y-3">
+                        <div
+                            className={`flex items-center gap-3 cursor-pointer pb-2 border-b ${theme.colors.ui.divider}`}
+                            onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
+                        >
+                            <span className={`font-mono text-lg ${theme.colors.text.primary}`}>
+                                {origin} <span className={theme.colors.text.muted}>→</span> {destination === "All" ? "all" : destination}
+                            </span>
+                            <span className={`text-xs font-mono ${theme.colors.text.muted} ml-auto`}>
+                                [{stationSelectorOpen ? "−" : "+"}]
+                            </span>
+                        </div>
+
+                        {stationSelectorOpen && (
+                            <div className="pt-2 space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-1">
+                                        <label className={`font-mono text-xs ${theme.colors.text.accent}`}>origin</label>
+                                        <Select value={origin} onValueChange={setOrigin}>
+                                            <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} font-mono text-sm`}>
+                                                <SelectValue placeholder="Select" />
+                                            </SelectTrigger>
+                                            <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                                {stations.map((s) => (
+                                                    <SelectItem key={s.stopname} value={s.stopname}>
+                                                        {s.stopname}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className={`font-mono text-xs ${theme.colors.text.accent}`}>destination</label>
+                                        <Select value={destination} onValueChange={setDestination}>
+                                            <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} font-mono text-sm`}>
+                                                <SelectValue placeholder="Select" />
+                                            </SelectTrigger>
+                                            <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
+                                                <SelectItem value="All">All</SelectItem>
+                                                {stations
+                                                    .filter((s) => s.stopname !== origin)
+                                                    .map((s) => (
+                                                        <SelectItem key={s.stopname} value={s.stopname}>
+                                                            {s.stopname}
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="flex items-end">
+                                        <Button
+                                            onClick={loadAllData}
+                                            variant="outline"
+                                            className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} w-full font-mono text-sm h-9`}
+                                        >
+                                            <RefreshCw className={`h-3 w-3 mr-1 ${loading ? "animate-spin" : ""}`} />
+                                            refresh
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* STATION SELECTION - Collapsible at top */}
-                <Card className={`${theme.colors.bg.card} ${theme.colors.text.primary} border ${theme.colors.ui.border}`}>
-                    <CardHeader
-                        className={`cursor-pointer ${theme.colors.ui.hover} transition-colors py-3`}
-                        onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
-                    >
-                        <CardTitle className="text-lg flex items-center justify-between">
-                            <span>
-                                {origin} {destination && destination !== "All" && `→ ${destination}`}
-                            </span>
-                            <Button variant="ghost" size="sm" className="h-8">
-                                {stationSelectorOpen ? "Hide" : "Change"}
-                            </Button>
-                        </CardTitle>
-                    </CardHeader>
-                    {stationSelectorOpen && (
-                        <CardContent className="flex flex-col md:flex-row gap-4 pt-0">
-                            <div className="flex-1 space-y-2">
-                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>Origin</label>
-                                <Select value={origin} onValueChange={setOrigin}>
-                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectValue placeholder="Select Origin" />
-                                    </SelectTrigger>
-                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        {stations.map((s) => (
-                                            <SelectItem key={s.stopname} value={s.stopname}>
-                                                {s.stopname}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="flex-1 space-y-2">
-                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>
-                                    Destination (Optional)
-                                </label>
-                                <Select value={destination} onValueChange={setDestination}>
-                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectValue placeholder="Select Destination" />
-                                    </SelectTrigger>
-                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectItem value="All">All Destinations</SelectItem>
-                                        {stations
-                                            .filter((s) => s.stopname !== origin)
-                                            .map((s) => (
-                                                <SelectItem key={s.stopname} value={s.stopname}>
-                                                    {s.stopname}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="flex items-end">
-                                <Button
-                                    onClick={loadAllData}
-                                    variant="outline"
-                                    className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} w-full md:w-auto`}
-                                >
-                                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                                    Refresh
-                                </Button>
-                            </div>
-                        </CardContent>
-                    )}
-                </Card>
-
-                {/* NEXT TRAIN BANNER - Compact and stylish */}
+                {/* NEXT TRAIN - Minimal text block */}
                 {nextTrain && (
-                    <Card className={`bg-gradient-to-r ${theme.gradients.main} border ${theme.colors.ui.border} ${theme.colors.shadow}`}>
-                    <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
-                                    <Train className="h-6 w-6 text-yellow-500" />
-                                </div>
-                                <div>
-                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Next Train from {origin}</div>
-                                    <div className="text-2xl font-bold text-yellow-500 flex items-center gap-2">
-                                        #{nextTrain.TrainNumber}
-                                        <Badge variant="outline" className="text-xs font-normal text-slate-300 border-slate-600">
-                                            {nextTrain.TrainType}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-center md:text-right flex items-center gap-4">
-                                <div>
-                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Departs {origin}</div>
-                                    <div className="text-3xl font-bold text-white">{nextTrain.Departure}</div>
-                                </div>
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="text-xl font-bold text-yellow-500 animate-pulse">
-                                        {nextTrain.ETA}
-                                    </div>
-                                    {nextTrain.delayStatus && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`
-                                                text-[10px] px-2 py-0.5 font-bold
-                                                ${nextTrain.delayStatus === "on-time" ? "text-green-400 border-green-500 bg-green-950/30" : ""}
-                                                ${nextTrain.delayStatus === "early" ? "text-blue-400 border-blue-500 bg-blue-950/30" : ""}
-                                                ${nextTrain.delayStatus === "delayed" ? "text-red-400 border-red-500 bg-red-950/30" : ""}
-                                            `}
-                                        >
-                                            {nextTrain.delayStatus === "on-time" && "ON TIME"}
-                                            {nextTrain.delayStatus === "early" && `${Math.abs(nextTrain.delayMinutes!)}m EARLY`}
-                                            {nextTrain.delayStatus === "delayed" && `${nextTrain.delayMinutes}m LATE`}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
+                    <div className={`py-6 px-0 border-t border-b ${theme.colors.ui.divider} space-y-2`}>
+                        <div className={`font-mono text-xs ${theme.colors.text.muted}`}>
+                            next departure from {origin}
                         </div>
-                    </CardContent>
-                </Card>
+                        <div className="flex items-baseline gap-4 flex-wrap">
+                            <span className={`font-mono text-3xl ${theme.colors.text.primary}`}>
+                                #{nextTrain.TrainNumber}
+                            </span>
+                            <span className={`font-mono text-sm ${theme.colors.text.accent}`}>
+                                {nextTrain.TrainType.toLowerCase()}
+                            </span>
+                            <span className={`font-mono text-xl ${theme.colors.text.primary}`}>
+                                {nextTrain.Departure}
+                            </span>
+                            <span className={`font-mono text-lg font-bold text-yellow-500 animate-pulse`}>
+                                {nextTrain.ETA}
+                            </span>
+                            {nextTrain.delayStatus && (
+                                <span className={`font-mono text-xs ${
+                                    nextTrain.delayStatus === "on-time" ? "text-green-400" :
+                                    nextTrain.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"
+                                }`}>
+                                    {nextTrain.delayStatus === "on-time" ? "on-time" :
+                                     nextTrain.delayStatus === "delayed" ? `${nextTrain.delayMinutes}m late` :
+                                     `${Math.abs(nextTrain.delayMinutes!)}m early`}
+                                </span>
+                            )}
+                        </div>
+                    </div>
                 )}
 
-                {/* Tabular View - Train Predictions with Tabs */}
+                {/* Tabular View - Minimal predictions */}
                 {(!journeyDirection || (journeyDirection === "NB" && nbPredictions.length > 0) || (journeyDirection === "SB" && sbPredictions.length > 0) || (!journeyDirection && (nbPredictions.length > 0 || sbPredictions.length > 0))) && (
-                    <Card className={`${theme.colors.bg.card} border ${theme.colors.ui.border}`}>
-                        <CardHeader className={`${theme.colors.bg.secondary} border-b ${theme.colors.ui.border}`}>
-                            <CardTitle className={`${theme.colors.text.primary}`}>
-                                {journeyDirection ? (journeyDirection === "NB" ? "Northbound" : "Southbound") : "Train Predictions"}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                            {journeyDirection ? (
-                                // Single direction view (streamlined)
-                                <PredictionTable
+                    <div className="space-y-6">
+                        {journeyDirection ? (
+                            // Single direction view
+                            <div className="space-y-4">
+                                <div className={`font-mono text-sm font-bold tracking-wide ${theme.colors.text.primary}`}>
+                                    {journeyDirection === "NB" ? "northbound" : "southbound"}
+                                </div>
+                                <BrutalPredictionTable
                                     predictions={journeyDirection === "NB" ? nbPredictions : sbPredictions}
                                     loading={loading}
                                     onSelectTrain={setSelectedTrain}
                                     selectedTrainId={selectedTrain?.TrainNumber}
                                     theme={theme}
                                 />
-                            ) : (
-                                // Both directions - use tabs
-                                <Tabs defaultValue="northbound" className="w-full">
-                                    <TabsList className={`grid w-full grid-cols-2 ${theme.colors.bg.tertiary}`}>
-                                        <TabsTrigger value="northbound" className={`${theme.colors.text.primary}`}>
-                                            Northbound ({nbPredictions.length})
-                                        </TabsTrigger>
-                                        <TabsTrigger value="southbound" className={`${theme.colors.text.primary}`}>
-                                            Southbound ({sbPredictions.length})
-                                        </TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="northbound" className="mt-4">
-                                        <PredictionTable
-                                            predictions={nbPredictions}
-                                            loading={loading}
-                                            onSelectTrain={setSelectedTrain}
-                                            selectedTrainId={selectedTrain?.TrainNumber}
-                                            theme={theme}
-                                        />
-                                    </TabsContent>
-                                    <TabsContent value="southbound" className="mt-4">
-                                        <PredictionTable
-                                            predictions={sbPredictions}
-                                            loading={loading}
-                                            onSelectTrain={setSelectedTrain}
-                                            selectedTrainId={selectedTrain?.TrainNumber}
-                                            theme={theme}
-                                        />
-                                    </TabsContent>
-                                </Tabs>
-                            )}
-                        </CardContent>
-                    </Card>
+                            </div>
+                        ) : (
+                            // Both directions - side by side
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="space-y-4">
+                                    <div className={`font-mono text-sm font-bold tracking-wide ${theme.colors.text.primary}`}>
+                                        northbound ({nbPredictions.length})
+                                    </div>
+                                    <BrutalPredictionTable
+                                        predictions={nbPredictions}
+                                        loading={loading}
+                                        onSelectTrain={setSelectedTrain}
+                                        selectedTrainId={selectedTrain?.TrainNumber}
+                                        theme={theme}
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <div className={`font-mono text-sm font-bold tracking-wide ${theme.colors.text.primary}`}>
+                                        southbound ({sbPredictions.length})
+                                    </div>
+                                    <BrutalPredictionTable
+                                        predictions={sbPredictions}
+                                        loading={loading}
+                                        onSelectTrain={setSelectedTrain}
+                                        selectedTrainId={selectedTrain?.TrainNumber}
+                                        theme={theme}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 )}
 
                 {/* Train Approach View - With Selector for Multiple Views */}
@@ -428,21 +405,18 @@ export default function CaltrainDisplay() {
                     </div>
                 )}
 
-                {/* GitHub Footer Badge */}
-                <div className={`text-center py-4 px-4 border-t ${theme.colors.ui.border} ${theme.colors.bg.secondary} rounded-lg`}>
+                {/* Minimal footer */}
+                <div className={`pt-8 border-t ${theme.colors.ui.divider} text-center space-y-2`}>
                     <a
                         href="https://github.com/theGreatHeisenberg/railtime"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${theme.colors.ui.hover} border ${theme.colors.ui.border}`}
+                        className={`inline-block font-mono text-xs ${theme.colors.text.accent} hover:${theme.colors.text.primary} transition-colors`}
                     >
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.868-.013-1.703-2.782.603-3.369-1.343-3.369-1.343-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.544 2.914 1.19.092-.926.35-1.546.636-1.903-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0110 4.836c.85.004 1.705.114 2.504.336 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.578.688.48C17.137 18.194 20 14.44 20 10.017 20 4.484 15.522 0 10 0z" clipRule="evenodd" />
-                        </svg>
-                        <span className={`${theme.colors.text.primary}`}>Star on GitHub</span>
+                        github.com/theGreatHeisenberg/railtime
                     </a>
-                    <p className={`text-xs ${theme.colors.text.muted} mt-2`}>
-                        Open source real-time Caltrain tracker
+                    <p className={`font-mono text-xs ${theme.colors.text.muted}`}>
+                        real-time caltrain tracker
                     </p>
                 </div>
             </div>
@@ -450,7 +424,7 @@ export default function CaltrainDisplay() {
     );
 }
 
-interface PredictionTableProps {
+interface BrutalPredictionTableProps {
     predictions: TrainPrediction[];
     loading: boolean;
     onSelectTrain: (train: TrainPrediction) => void;
@@ -458,110 +432,71 @@ interface PredictionTableProps {
     theme: any;
 }
 
-function PredictionTable({
+function BrutalPredictionTable({
     predictions,
     loading,
     onSelectTrain,
     selectedTrainId,
     theme,
-}: PredictionTableProps) {
+}: BrutalPredictionTableProps) {
+    if (loading) {
+        return (
+            <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className={`h-6 w-full ${theme.colors.bg.tertiary}`} />
+                ))}
+            </div>
+        );
+    }
+
+    if (predictions.length === 0) {
+        return (
+            <div className={`font-mono text-sm ${theme.colors.text.muted}`}>
+                no trains scheduled
+            </div>
+        );
+    }
+
     return (
-        <div>
-            {loading ? (
-                <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className={`h-12 w-full ${theme.colors.bg.tertiary}`} />
-                    ))}
+        <div className="space-y-2">
+            {predictions.slice(0, 10).map((p) => (
+                <div
+                    key={p.TrainNumber}
+                    onClick={() => onSelectTrain(p)}
+                    className={`flex items-center justify-between py-1.5 px-2 cursor-pointer border-l-2 transition-colors ${
+                        selectedTrainId === p.TrainNumber
+                            ? `border-l-yellow-500 ${theme.colors.bg.secondary}`
+                            : `border-l-transparent ${theme.colors.ui.hover}`
+                    }`}
+                >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className={`font-mono font-bold text-base ${theme.colors.text.primary} w-16`}>
+                            #{p.TrainNumber}
+                        </span>
+                        <span className={`font-mono text-xs ${theme.colors.text.accent} w-12`}>
+                            {p.TrainType.toLowerCase().substring(0, 3)}
+                        </span>
+                        <span className={`font-mono text-sm ${theme.colors.text.primary} w-16`}>
+                            {p.Departure}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+                        <span className={`font-mono text-sm font-bold text-yellow-500 animate-pulse-slow w-12 text-right`}>
+                            {p.ETA}
+                        </span>
+                        {p.delayStatus && (
+                            <span className={`font-mono text-xs ${
+                                p.delayStatus === "on-time" ? "text-green-400" :
+                                p.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"
+                            } w-12 text-right`}>
+                                {p.delayStatus === "on-time" ? "on" :
+                                 p.delayStatus === "delayed" ? `+${p.delayMinutes}m` :
+                                 `−${Math.abs(p.delayMinutes!)}m`}
+                            </span>
+                        )}
+                    </div>
                 </div>
-            ) : predictions.length === 0 ? (
-                <div className={`${theme.colors.text.muted} text-center py-8`}>
-                    No trains scheduled
-                </div>
-            ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className={`border-b ${theme.colors.ui.border}`}>
-                            <TableHead className={theme.colors.text.accent}>Train</TableHead>
-                            <TableHead className={theme.colors.text.accent}>Type</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Departure</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Status</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>ETA</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {predictions.slice(0, 8).map((p) => (
-                            <TableRow
-                                key={p.TrainNumber}
-                                onClick={() => onSelectTrain(p)}
-                                className={`cursor-pointer transition-colors ${
-                                    selectedTrainId === p.TrainNumber
-                                        ? `${theme.colors.bg.secondary} ${theme.colors.text.primary}`
-                                        : `${theme.colors.ui.hover} ${theme.colors.text.primary}`
-                                }`}
-                            >
-                                <TableCell className={`font-semibold ${theme.colors.text.primary}`}>
-                                    #{p.TrainNumber}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        variant="outline"
-                                        className={`text-xs font-mono ${
-                                            p.TrainType === "Bullet"
-                                                ? "text-red-500 border-red-900 bg-red-950/30"
-                                                : p.TrainType === "Limited"
-                                                    ? "text-yellow-500 border-yellow-900 bg-yellow-950/30"
-                                                    : "text-green-500 border-green-900 bg-green-950/30"
-                                        }`}
-                                    >
-                                        {p.TrainType}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {p.delayStatus && (p.delayStatus === "delayed" || p.delayStatus === "early") ? (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className={`line-through text-xs ${theme.colors.text.muted}`}>
-                                                {p.ScheduledTime}
-                                            </span>
-                                            <span
-                                                className={
-                                                    p.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"
-                                                }
-                                            >
-                                                {p.Departure}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-green-400">{p.Departure}</span>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {p.delayStatus && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`text-[10px] font-bold ${
-                                                p.delayStatus === "on-time"
-                                                    ? "text-green-400 border-green-700 bg-green-950/30"
-                                                    : p.delayStatus === "early"
-                                                        ? "text-blue-400 border-blue-700 bg-blue-950/30"
-                                                        : "text-red-400 border-red-700 bg-red-950/30"
-                                            }`}
-                                        >
-                                            {p.delayStatus === "on-time"
-                                                ? "ON TIME"
-                                                : p.delayStatus === "early"
-                                                    ? `${Math.abs(p.delayMinutes!)}m EARLY`
-                                                    : `${p.delayMinutes}m LATE`}
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className={`text-right font-bold ${theme.colors.text.primary} animate-pulse-slow`}>
-                                    {p.ETA}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+            ))}
         </div>
     );
 }
