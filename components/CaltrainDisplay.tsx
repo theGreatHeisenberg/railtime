@@ -25,10 +25,10 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import dynamic from "next/dynamic";
-import SettingsModal from "./SettingsModal";
+import TerminalSettingsModal from "./TerminalSettingsModal";
 import TrainApproachViewSelector from "./TrainApproachViewSelector";
 import TrainSummary from "./TrainSummary";
-import ThemeSwitcher from "./ThemeSwitcher";
+import TerminalThemeSwitcher from "./TerminalThemeSwitcher";
 import { fetchVehiclePositions } from "@/lib/caltrain";
 import { useTheme } from "@/lib/ThemeContext";
 import { calculateStationETAs, getTrainETAFromPredictions } from "@/lib/etaCalculations";
@@ -219,7 +219,8 @@ export default function CaltrainDisplay() {
                             {lastUpdated && `LAST UPDATE: ${lastUpdated.toLocaleTimeString()}`}
                         </span>
                         <div className="flex gap-2">
-                            <ThemeSwitcher />
+                            <TerminalThemeSwitcher />
+                            {stations.length > 0 && <TerminalSettingsModal stations={stations} />}
                         </div>
                     </div>
 
