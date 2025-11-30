@@ -125,35 +125,68 @@ export default function TerminalCorridorView({
         visibleStations = normalizedStations.slice(startIdx, endIdx + 1);
     }
 
-    // Build ASCII corridor visualization
+    // Build ASCII corridor visualization with colored stations
     const corridorWidth = 60;
-    const railLine = Array(corridorWidth).fill('─');
+
+    // Track station information by position
+    const stationMap = new Map<number, {
+        name: string;
+        isPassed: boolean;
+        isOrigin: boolean;
+        isDestination: boolean;
+    }>();
+
+    const minPercent = visibleStations[0].percent;
+    const maxPercent = visibleStations[visibleStations.length - 1].percent;
+    const range = maxPercent - minPercent || 100;
 
     // Place stations
-    visibleStations.forEach((station, idx) => {
-        const minPercent = visibleStations[0].percent;
-        const maxPercent = visibleStations[visibleStations.length - 1].percent;
-        const range = maxPercent - minPercent || 100;
+    visibleStations.forEach((station) => {
         const displayPercent = range > 0 ? ((station.percent - minPercent) / range) * 100 : 50;
         const pos = Math.round((displayPercent / 100) * (corridorWidth - 1));
 
         if (pos >= 0 && pos < corridorWidth) {
-            railLine[pos] = station.stopname === origin ? '●' : '○';
+            const isPassed = trainPercent !== null && (train.Direction === "SB"
+                ? station.percent / 100 <= trainPercent
+                : station.percent / 100 >= trainPercent);
+
+            stationMap.set(pos, {
+                name: station.stopname,
+                isPassed: isPassed,
+                isOrigin: station.stopname === origin,
+                isDestination: station.stopname === passedDestination,
+            });
         }
     });
 
-    // Place train
-    if (trainPercent !== null) {
-        const minPercent = visibleStations[0].percent;
-        const maxPercent = visibleStations[visibleStations.length - 1].percent;
-        const range = maxPercent - minPercent || 100;
-        const displayPercent = range > 0 ? ((trainPercent - minPercent) / range) * 100 : 50;
-        const pos = Math.round((displayPercent / 100) * (corridorWidth - 1));
-
-        if (pos >= 0 && pos < corridorWidth) {
-            railLine[pos] = '▶';
+    // Build rail line with station positions
+    const railLine = Array(corridorWidth).fill('─').map((char, idx) => {
+        if (stationMap.has(idx)) {
+            const station = stationMap.get(idx)!;
+            if (station.isOrigin) return '●'; // Blue (origin)
+            if (station.isDestination) return '●'; // Orange (destination)
+            if (station.isPassed) return '●'; // Grey (passed)
+            return '○'; // Hollow (unvisited)
         }
+        return char;
+    });
+
+    // Place train indicator
+    let trainPos: number | null = null;
+    if (trainPercent !== null) {
+        const displayPercent = range > 0 ? ((trainPercent - minPercent) / range) * 100 : 50;
+        trainPos = Math.round((displayPercent / 100) * (corridorWidth - 1));
     }
+
+    // Build colored corridor line
+    const getStationColor = (pos: number): string => {
+        const station = stationMap.get(pos);
+        if (!station) return 'text-cyan-500';
+        if (station.isOrigin) return 'text-blue-400';
+        if (station.isDestination) return 'text-orange-400';
+        if (station.isPassed) return 'text-gray-500';
+        return 'text-cyan-400';
+    };
 
     const getRealTimeETA = (predictions: TrainPrediction[]): number => {
         const prediction = predictions.find(p => p.TrainNumber === train.TrainNumber);
@@ -176,7 +209,7 @@ export default function TerminalCorridorView({
             {/* Train Status */}
             <div className="flex items-center justify-between text-xs">
                 <span className="text-green-400">
-                    Train #{train.TrainNumber} {train.Direction === "SB" ? "↓ SOUTH" : "↑ NORTH"}
+                    Train #{train.TrainNumber}
                 </span>
                 <span className={`${
                     train.delayStatus === "delayed" ? "text-red-400" :
@@ -188,24 +221,38 @@ export default function TerminalCorridorView({
                 </span>
             </div>
 
-            {/* ASCII Corridor */}
-            <div className="bg-black border border-cyan-500/20 p-3 space-y-2">
-                <div className="text-cyan-500 tracking-widest text-xs">
-                    {railLine.join('')}
+            {/* Direction and Corridor */}
+            <div className="bg-black border border-cyan-500/20 p-3 space-y-3">
+                {/* Direction Indicators */}
+                <div className="flex items-center justify-between text-[10px] text-cyan-600 tracking-widest">
+                    <span>{train.Direction === "SB" ? "← SOUTHBOUND" : "NORTHBOUND →"}</span>
+                    <span className="text-cyan-500">{trainPercent !== null ? Math.round(trainPercent * 100) : 0}% progress</span>
                 </div>
 
-                {/* Station Labels */}
-                <div className="text-[10px] text-cyan-400 space-y-1">
-                    {visibleStations.slice(0, 5).map((s) => (
-                        <div key={s.stopname} className="truncate">
-                            {s.stopname === origin ? `● ${s.stopname}` : `○ ${s.stopname}`}
-                        </div>
-                    ))}
-                    {visibleStations.length > 5 && (
-                        <div className="text-cyan-600 text-[9px]">
-                            ... +{visibleStations.length - 5} more stations
-                        </div>
-                    )}
+                {/* ASCII Corridor with colored stations */}
+                <div className="relative">
+                    <div className="text-cyan-500 tracking-widest text-xs font-bold">
+                        {railLine.map((char, idx) => {
+                            const color = getStationColor(idx);
+                            const isTrainPos = idx === trainPos;
+                            return (
+                                <span key={idx} className={isTrainPos ? "text-green-400 font-bold" : color}>
+                                    {isTrainPos ? "▶" : char}
+                                </span>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Legend */}
+                <div className="text-[9px] space-y-0.5 border-t border-cyan-500/20 pt-2">
+                    <div className="flex gap-3">
+                        <span><span className="text-blue-400">●</span> Origin</span>
+                        <span><span className="text-orange-400">●</span> Destination</span>
+                        <span><span className="text-gray-500">●</span> Passed</span>
+                        <span><span className="text-cyan-400">○</span> Unvisited</span>
+                        <span><span className="text-green-400">▶</span> Train</span>
+                    </div>
                 </div>
             </div>
 
@@ -218,7 +265,7 @@ export default function TerminalCorridorView({
                     }
                 </div>
                 <div className="text-cyan-500">
-                    Progress: {trainPercent ? Math.round(trainPercent) : '?'}% | Type: {train.TrainType}
+                    Type: {train.TrainType} | {train.Direction === "SB" ? "↓ Moving South" : "↑ Moving North"}
                 </div>
             </div>
         </div>
