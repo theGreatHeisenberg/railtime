@@ -27,7 +27,7 @@ import {
 import dynamic from "next/dynamic";
 import SettingsModal from "./SettingsModal";
 import TrainApproachViewSelector from "./TrainApproachViewSelector";
-import TrainSummary from "./TrainSummary";
+import BrutalTrainSummary from "./BrutalTrainSummary";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { fetchVehiclePositions } from "@/lib/caltrain";
 import { useTheme } from "@/lib/ThemeContext";
@@ -397,7 +397,7 @@ export default function CaltrainDisplay() {
                             journey summary
                         </div>
                         <div className={`border-t border-b ${theme.colors.ui.divider} py-4`}>
-                            <TrainSummary
+                            <BrutalTrainSummary
                                 train={selectedTrain}
                                 origin={origin}
                                 destination={destination !== "All" ? destination : undefined}
