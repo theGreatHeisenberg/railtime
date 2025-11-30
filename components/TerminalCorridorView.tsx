@@ -21,11 +21,9 @@ export default function TerminalCorridorView({
     stations,
     destination: passedDestination,
     vehiclePositions = [],
-    currentTime: passedCurrentTime,
     originPredictions: passedOriginPredictions = [],
 }: TerminalCorridorViewProps) {
     const vehiclePosition = vehiclePositions.find(p => p.Vehicle?.Trip?.TripId === train.TrainNumber) || null;
-    const currentTime = passedCurrentTime || new Date();
 
     const sortedStations = [...stations].sort((a, b) => {
         const idA = parseInt(a.stop1);
@@ -37,8 +35,7 @@ export default function TerminalCorridorView({
         const R = 6371;
         const dLat = (lat2 - lat1) * (Math.PI / 180);
         const dLon = (lon2 - lon1) * (Math.PI / 180);
-        const a =
-            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
             Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
             Math.sin(dLon / 2) * Math.sin(dLon / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
@@ -63,10 +60,8 @@ export default function TerminalCorridorView({
         if (!vehiclePosition) return null;
         const trainLat = vehiclePosition.Vehicle.Position.Latitude;
         const trainLon = vehiclePosition.Vehicle.Position.Longitude;
-
         let closestIdx = 0;
         let minD = Infinity;
-
         sortedStations.forEach((s, i) => {
             const d = getDistance(trainLat, trainLon, s.lat, s.lon);
             if (d < minD) {
@@ -74,119 +69,100 @@ export default function TerminalCorridorView({
                 closestIdx = i;
             }
         });
+        return (normalizedStations[closestIdx].percent / 100);
+    };
 
-        let segmentStartIdx = closestIdx;
-        let segmentEndIdx = closestIdx;
-        let interpolationFactor = 0;
+    const trainProgress = getTrainPercent() ?? 0.5;
 
-        if (closestIdx > 0) {
-            const prevStation = sortedStations[closestIdx - 1];
-            const currStation = sortedStations[closestIdx];
-            const distToPrev = getDistance(trainLat, trainLon, prevStation.lat, prevStation.lon);
-            const distToCurr = getDistance(trainLat, trainLon, currStation.lat, currStation.lon);
-            const segmentLength = getDistance(prevStation.lat, prevStation.lon, currStation.lat, currStation.lon);
+    const originIdx = normalizedStations.findIndex(s => s.stopname === origin);
+    const destIdx = normalizedStations.findIndex(s => s.stopname === passedDestination);
 
-            if (distToPrev + distToCurr <= segmentLength * 1.2) {
-                segmentStartIdx = closestIdx - 1;
-                segmentEndIdx = closestIdx;
-                interpolationFactor = distToPrev / segmentLength;
+    // Build simple corridor with only key elements
+    const buildCorridorDots = () => {
+        const dots: Array<{ type: 'station' | 'train' | 'separator'; color: string; label?: string; hiddenCount?: number }> = [];
+
+        // Find most recently passed station (closest to train but before it)
+        let recentlyPassedIdx = -1;
+        let closestDistToPassed = Infinity;
+
+        for (let i = 0; i < normalizedStations.length; i++) {
+            const stationProgress = normalizedStations[i].percent / 100;
+            const isPassed = train.Direction === "SB"
+                ? stationProgress > trainProgress
+                : stationProgress <= trainProgress;
+
+            if (isPassed) {
+                const distToPassed = Math.abs(stationProgress - trainProgress);
+                if (distToPassed < closestDistToPassed) {
+                    closestDistToPassed = distToPassed;
+                    recentlyPassedIdx = i;
+                }
             }
         }
 
-        const startPercent = normalizedStations[segmentStartIdx].percent;
-        const endPercent = normalizedStations[segmentEndIdx].percent;
-        const interpolatedPercent = startPercent + (endPercent - startPercent) * interpolationFactor;
+        // Add recently passed station
+        if (recentlyPassedIdx !== -1) {
+            const station = normalizedStations[recentlyPassedIdx];
+            dots.push({ type: 'station', color: 'text-gray-500', label: station.stopname });
 
-        return {
-            percent: interpolatedPercent,
-            stationIdx: closestIdx,
-        };
+            // Count stations between recently passed and train
+            let hiddenBetween = 0;
+            const minIdx = Math.min(recentlyPassedIdx, trainIdx);
+            const maxIdx = Math.max(recentlyPassedIdx, trainIdx);
+            for (let i = minIdx + 1; i < maxIdx; i++) {
+                hiddenBetween++;
+            }
+            if (hiddenBetween > 0) {
+                dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenBetween });
+            } else {
+                dots.push({ type: 'separator', color: 'text-cyan-600' });
+            }
+        } else {
+            dots.push({ type: 'separator', color: 'text-cyan-600' });
+        }
+
+        dots.push({ type: 'train', color: 'text-green-400' });
+
+        // Count stations between train and origin
+        let hiddenToOrigin = 0;
+        if (originIdx !== -1) {
+            const minIdx = Math.min(trainIdx, originIdx);
+            const maxIdx = Math.max(trainIdx, originIdx);
+            for (let i = minIdx + 1; i < maxIdx; i++) {
+                hiddenToOrigin++;
+            }
+            dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenToOrigin > 0 ? hiddenToOrigin : undefined });
+
+            const station = normalizedStations[originIdx];
+            dots.push({ type: 'station', color: 'text-blue-400', label: station.stopname });
+        }
+
+        // Add separator and destination if it exists
+        if (destIdx !== -1) {
+            let hiddenToDest = 0;
+            const minIdx = Math.min(originIdx, destIdx);
+            const maxIdx = Math.max(originIdx, destIdx);
+            for (let i = minIdx + 1; i < maxIdx; i++) {
+                hiddenToDest++;
+            }
+            dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenToDest > 0 ? hiddenToDest : undefined });
+            const station = normalizedStations[destIdx];
+            dots.push({ type: 'station', color: 'text-orange-400', label: station.stopname });
+        }
+
+        return dots;
     };
 
-    const trainData = getTrainPercent();
-    const trainPercent = trainData?.percent ?? null;
-
-    const originStation = normalizedStations.find(s => s.stopname === origin);
-    const originIdx = normalizedStations.findIndex(s => s.stopname === origin);
-
-    // Take max 12 stations around the train
-    const MAX_VISIBLE = 12;
-    let visibleStations = normalizedStations;
-
-    if (originIdx !== -1) {
-        const focusIdx = trainPercent !== null ? (trainData?.stationIdx ?? originIdx) : originIdx;
-        let startIdx = Math.max(0, focusIdx - 3);
-        let endIdx = Math.min(normalizedStations.length - 1, startIdx + MAX_VISIBLE - 1);
-
-        if (endIdx - startIdx + 1 < MAX_VISIBLE) {
-            startIdx = Math.max(0, endIdx - MAX_VISIBLE + 1);
+    // Find train index for hidden station counting
+    let trainIdx = 0;
+    for (let i = 0; i < normalizedStations.length; i++) {
+        if (normalizedStations[i].percent / 100 >= trainProgress) {
+            trainIdx = i;
+            break;
         }
-
-        visibleStations = normalizedStations.slice(startIdx, endIdx + 1);
     }
 
-    // Build ASCII corridor visualization with colored stations
-    const corridorWidth = 60;
-
-    // Track station information by position
-    const stationMap = new Map<number, {
-        name: string;
-        isPassed: boolean;
-        isOrigin: boolean;
-        isDestination: boolean;
-    }>();
-
-    const minPercent = visibleStations[0].percent;
-    const maxPercent = visibleStations[visibleStations.length - 1].percent;
-    const range = maxPercent - minPercent || 100;
-
-    // Place stations
-    visibleStations.forEach((station) => {
-        const displayPercent = range > 0 ? ((station.percent - minPercent) / range) * 100 : 50;
-        const pos = Math.round((displayPercent / 100) * (corridorWidth - 1));
-
-        if (pos >= 0 && pos < corridorWidth) {
-            const isPassed = trainPercent !== null && (train.Direction === "SB"
-                ? station.percent / 100 <= trainPercent
-                : station.percent / 100 >= trainPercent);
-
-            stationMap.set(pos, {
-                name: station.stopname,
-                isPassed: isPassed,
-                isOrigin: station.stopname === origin,
-                isDestination: station.stopname === passedDestination,
-            });
-        }
-    });
-
-    // Build rail line with station positions
-    const railLine = Array(corridorWidth).fill('─').map((char, idx) => {
-        if (stationMap.has(idx)) {
-            const station = stationMap.get(idx)!;
-            if (station.isOrigin) return '●'; // Blue (origin)
-            if (station.isDestination) return '●'; // Orange (destination)
-            if (station.isPassed) return '●'; // Grey (passed)
-            return '○'; // Hollow (unvisited)
-        }
-        return char;
-    });
-
-    // Place train indicator
-    let trainPos: number | null = null;
-    if (trainPercent !== null) {
-        const displayPercent = range > 0 ? ((trainPercent - minPercent) / range) * 100 : 50;
-        trainPos = Math.round((displayPercent / 100) * (corridorWidth - 1));
-    }
-
-    // Build colored corridor line
-    const getStationColor = (pos: number): string => {
-        const station = stationMap.get(pos);
-        if (!station) return 'text-cyan-500';
-        if (station.isOrigin) return 'text-blue-400';
-        if (station.isDestination) return 'text-orange-400';
-        if (station.isPassed) return 'text-gray-500';
-        return 'text-cyan-400';
-    };
+    const corridorDots = buildCorridorDots();
 
     const getRealTimeETA = (predictions: TrainPrediction[]): number => {
         const prediction = predictions.find(p => p.TrainNumber === train.TrainNumber);
@@ -221,37 +197,43 @@ export default function TerminalCorridorView({
                 </span>
             </div>
 
-            {/* Direction and Corridor */}
-            <div className="bg-black border border-cyan-500/20 p-3 space-y-3">
-                {/* Direction Indicators */}
-                <div className="flex items-center justify-between text-[10px] text-cyan-600 tracking-widest">
-                    <span>{train.Direction === "SB" ? "← SOUTHBOUND" : "NORTHBOUND →"}</span>
-                    <span className="text-cyan-500">{trainPercent !== null ? Math.round(trainPercent * 100) : 0}% progress</span>
-                </div>
+            {/* Direction Indicator */}
+            <div className="flex items-center justify-between text-[10px] text-cyan-600 tracking-widest">
+                <span>{train.Direction === "SB" ? "← SOUTHBOUND" : "NORTHBOUND →"}</span>
+                <span className="text-cyan-500">{Math.round(trainProgress * 100)}% progress</span>
+            </div>
 
-                {/* ASCII Corridor with colored stations */}
-                <div className="relative">
-                    <div className="text-cyan-500 tracking-widest text-xs font-bold">
-                        {railLine.map((char, idx) => {
-                            const color = getStationColor(idx);
-                            const isTrainPos = idx === trainPos;
-                            return (
-                                <span key={idx} className={isTrainPos ? "text-green-400 font-bold" : color}>
-                                    {isTrainPos ? "▶" : char}
-                                </span>
-                            );
-                        })}
-                    </div>
+            {/* Horizontal corridor dots */}
+            <div className="bg-black border border-cyan-500/20 p-3 space-y-2">
+                <div className="text-cyan-400 text-lg font-mono flex items-center justify-center gap-1">
+                    {corridorDots.map((dot, idx) => (
+                        <div key={idx} className="flex flex-col items-center">
+                            <span className={dot.color}>
+                                {dot.type === 'train'
+                                    ? (train.Direction === "SB" ? "◀" : "▶")
+                                    : dot.type === 'separator'
+                                    ? "---"
+                                    : "●"
+                                }
+                            </span>
+                            {dot.type === 'separator' && dot.hiddenCount && (
+                                <span className="text-cyan-600 text-[8px] whitespace-nowrap">+{dot.hiddenCount}</span>
+                            )}
+                        </div>
+                    ))}
                 </div>
 
                 {/* Legend */}
                 <div className="text-[9px] space-y-0.5 border-t border-cyan-500/20 pt-2">
-                    <div className="flex gap-3">
-                        <span><span className="text-blue-400">●</span> Origin</span>
-                        <span><span className="text-orange-400">●</span> Destination</span>
-                        <span><span className="text-gray-500">●</span> Passed</span>
-                        <span><span className="text-cyan-400">○</span> Unvisited</span>
-                        <span><span className="text-green-400">▶</span> Train</span>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                        {corridorDots.find(d => d.type === 'station' && d.color === 'text-gray-500') && (
+                            <span><span className="text-gray-500">●</span> {corridorDots.find(d => d.type === 'station' && d.color === 'text-gray-500')?.label}</span>
+                        )}
+                        <span><span className={train.Direction === "SB" ? "text-red-400" : "text-green-400"}>
+                            {train.Direction === "SB" ? "◀" : "▶"}
+                        </span> Train</span>
+                        <span><span className="text-blue-400">●</span> {origin}</span>
+                        {passedDestination && <span><span className="text-orange-400">●</span> {passedDestination}</span>}
                     </div>
                 </div>
             </div>

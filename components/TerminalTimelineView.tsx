@@ -204,7 +204,18 @@ export default function TerminalTimelineView({
                     const isOrigin = station.stopname === origin;
                     const isDestination = station.stopname === passedDestination;
                     const eta = getStationETA(station.stopname);
-                    const etaStr = eta.relativeMinutes >= 0 ? eta.arrivalTime : "PASSED";
+
+                    // Calculate relative time display
+                    let relativeTimeStr = "";
+                    if (eta.relativeMinutes < 0) {
+                        relativeTimeStr = "PASSED";
+                    } else if (eta.relativeMinutes === 0) {
+                        relativeTimeStr = "NOW";
+                    } else if (eta.relativeMinutes === -1) {
+                        relativeTimeStr = "LOADING";
+                    } else {
+                        relativeTimeStr = `in ${eta.relativeMinutes}m`;
+                    }
 
                     const statusIcon = isPassed
                         ? isOrigin
@@ -233,11 +244,16 @@ export default function TerminalTimelineView({
                                 <span className={colorClass}>{statusIcon}</span>
                                 <span className="truncate flex-1">{station.stopname}</span>
                             </div>
-                            <span className={`text-[10px] ml-2 ${
-                                eta.relativeMinutes < 0 ? "text-green-500" : "text-pink-400"
-                            }`}>
-                                {etaStr}
-                            </span>
+                            <div className="flex flex-col items-end gap-0.5 ml-2">
+                                <span className={`text-[10px] ${
+                                    eta.relativeMinutes < 0 ? "text-green-500" : "text-pink-400"
+                                }`}>
+                                    {relativeTimeStr}
+                                </span>
+                                <span className="text-[9px] text-cyan-600">
+                                    {eta.arrivalTime}
+                                </span>
+                            </div>
                         </div>
                     );
                 })}
