@@ -340,213 +340,97 @@ export default function CaltrainDisplay() {
 
                 <div className="border border-cyan-500/30 border-dashed"></div>
 
-                {/* STATION SELECTION - Collapsible at top */}
-                <Card className={`${theme.colors.bg.card} ${theme.colors.text.primary} border ${theme.colors.ui.border}`}>
-                    <CardHeader
-                        className={`cursor-pointer ${theme.colors.ui.hover} transition-colors py-3`}
-                        onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
-                    >
-                        <CardTitle className="text-lg flex items-center justify-between">
-                            <span>
-                                {origin} {destination && destination !== "All" && `→ ${destination}`}
-                            </span>
-                            <Button variant="ghost" size="sm" className="h-8">
-                                {stationSelectorOpen ? "Hide" : "Change"}
-                            </Button>
-                        </CardTitle>
-                    </CardHeader>
-                    {stationSelectorOpen && (
-                        <CardContent className="flex flex-col md:flex-row gap-4 pt-0">
-                            <div className="flex-1 space-y-2">
-                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>Origin</label>
-                                <Select value={origin} onValueChange={setOrigin}>
-                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectValue placeholder="Select Origin" />
-                                    </SelectTrigger>
-                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        {stations.map((s) => (
-                                            <SelectItem key={s.stopname} value={s.stopname}>
-                                                {s.stopname}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
 
-                            <div className="flex-1 space-y-2">
-                                <label className={`text-sm font-medium ${theme.colors.text.accent}`}>
-                                    Destination (Optional)
-                                </label>
-                                <Select value={destination} onValueChange={setDestination}>
-                                    <SelectTrigger className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectValue placeholder="Select Destination" />
-                                    </SelectTrigger>
-                                    <SelectContent className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
-                                        <SelectItem value="All">All Destinations</SelectItem>
-                                        {stations
-                                            .filter((s) => s.stopname !== origin)
-                                            .map((s) => (
-                                                <SelectItem key={s.stopname} value={s.stopname}>
-                                                    {s.stopname}
-                                                </SelectItem>
-                                            ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-
-                            <div className="flex items-end">
-                                <Button
-                                    onClick={loadAllData}
-                                    variant="outline"
-                                    className={`${theme.colors.bg.tertiary} border ${theme.colors.ui.border} ${theme.colors.text.primary} w-full md:w-auto`}
-                                >
-                                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                                    Refresh
-                                </Button>
-                            </div>
-                        </CardContent>
-                    )}
-                </Card>
-
-                {/* NEXT TRAIN BANNER - Compact and stylish */}
-                {nextTrain && (
-                    <Card className={`bg-gradient-to-r ${theme.gradients.main} border ${theme.colors.ui.border} ${theme.colors.shadow}`}>
-                    <CardContent className="p-4">
-                        <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
-                                    <Train className="h-6 w-6 text-yellow-500" />
-                                </div>
-                                <div>
-                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Next Train from {origin}</div>
-                                    <div className="text-2xl font-bold text-yellow-500 flex items-center gap-2">
-                                        #{nextTrain.TrainNumber}
-                                        <Badge variant="outline" className="text-xs font-normal text-slate-300 border-slate-600">
-                                            {nextTrain.TrainType}
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-center md:text-right flex items-center gap-4">
-                                <div>
-                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Departs {origin}</div>
-                                    <div className="text-3xl font-bold text-white">{nextTrain.Departure}</div>
-                                </div>
-                                <div className="flex flex-col items-center gap-1">
-                                    <div className="text-xl font-bold text-yellow-500 animate-pulse">
-                                        {nextTrain.ETA}
-                                    </div>
-                                    {nextTrain.delayStatus && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`
-                                                text-[10px] px-2 py-0.5 font-bold
-                                                ${nextTrain.delayStatus === "on-time" ? "text-green-400 border-green-500 bg-green-950/30" : ""}
-                                                ${nextTrain.delayStatus === "early" ? "text-blue-400 border-blue-500 bg-blue-950/30" : ""}
-                                                ${nextTrain.delayStatus === "delayed" ? "text-red-400 border-red-500 bg-red-950/30" : ""}
-                                            `}
-                                        >
-                                            {nextTrain.delayStatus === "on-time" && "ON TIME"}
-                                            {nextTrain.delayStatus === "early" && `${Math.abs(nextTrain.delayMinutes!)}m EARLY`}
-                                            {nextTrain.delayStatus === "delayed" && `${nextTrain.delayMinutes}m LATE`}
-                                        </Badge>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-                )}
-
-                {/* Tabular View - Train Predictions with Tabs */}
+                {/* PREDICTIONS PANEL - Train Predictions with Terminal Styling */}
                 {(!journeyDirection || (journeyDirection === "NB" && nbPredictions.length > 0) || (journeyDirection === "SB" && sbPredictions.length > 0) || (!journeyDirection && (nbPredictions.length > 0 || sbPredictions.length > 0))) && (
-                    <Card className={`${theme.colors.bg.card} border ${theme.colors.ui.border}`}>
-                        <CardHeader className={`${theme.colors.bg.secondary} border-b ${theme.colors.ui.border}`}>
-                            <CardTitle className={`${theme.colors.text.primary}`}>
-                                {journeyDirection ? (journeyDirection === "NB" ? "Northbound" : "Southbound") : "Train Predictions"}
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4">
-                            {journeyDirection ? (
-                                // Single direction view (streamlined)
-                                <PredictionTable
+                    <div className="space-y-3">
+                        {journeyDirection ? (
+                            <>
+                                <div className="text-green-400 text-xs font-bold tracking-widest">
+                                    ╔═══ {journeyDirection === "NB" ? "NORTHBOUND" : "SOUTHBOUND"} QUEUE ═══╗
+                                </div>
+                                <TerminalPredictionTable
                                     predictions={journeyDirection === "NB" ? nbPredictions : sbPredictions}
                                     loading={loading}
                                     onSelectTrain={setSelectedTrain}
                                     selectedTrainId={selectedTrain?.TrainNumber}
-                                    theme={theme}
                                 />
-                            ) : (
-                                // Both directions - use tabs
-                                <Tabs defaultValue="northbound" className="w-full">
-                                    <TabsList className={`grid w-full grid-cols-2 ${theme.colors.bg.tertiary}`}>
-                                        <TabsTrigger value="northbound" className={`${theme.colors.text.primary}`}>
-                                            Northbound ({nbPredictions.length})
-                                        </TabsTrigger>
-                                        <TabsTrigger value="southbound" className={`${theme.colors.text.primary}`}>
-                                            Southbound ({sbPredictions.length})
-                                        </TabsTrigger>
-                                    </TabsList>
-                                    <TabsContent value="northbound" className="mt-4">
-                                        <PredictionTable
-                                            predictions={nbPredictions}
-                                            loading={loading}
-                                            onSelectTrain={setSelectedTrain}
-                                            selectedTrainId={selectedTrain?.TrainNumber}
-                                            theme={theme}
-                                        />
-                                    </TabsContent>
-                                    <TabsContent value="southbound" className="mt-4">
-                                        <PredictionTable
-                                            predictions={sbPredictions}
-                                            loading={loading}
-                                            onSelectTrain={setSelectedTrain}
-                                            selectedTrainId={selectedTrain?.TrainNumber}
-                                            theme={theme}
-                                        />
-                                    </TabsContent>
-                                </Tabs>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Train Approach View - With Selector for Multiple Views */}
-                {selectedTrain && (
-                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
-                        <TrainApproachViewSelector
-                            train={selectedTrain}
-                            origin={origin}
-                            stations={stations}
-                            destination={destination !== "All" ? destination : undefined}
-                            onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
-                            vehiclePositions={vehiclePositions}
-                            currentTime={currentTime}
-                            originPredictions={predictions}
-                            destinationPredictions={destinationPredictions}
-                            loading={loading}
-                            stationETAMap={stationETAMap}
-                        />
+                            </>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-3">
+                                    <div className="text-green-400 text-xs font-bold tracking-widest">
+                                        ╔═══ NORTHBOUND QUEUE ═══╗
+                                    </div>
+                                    <TerminalPredictionTable
+                                        predictions={nbPredictions}
+                                        loading={loading}
+                                        onSelectTrain={setSelectedTrain}
+                                        selectedTrainId={selectedTrain?.TrainNumber}
+                                    />
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="text-pink-400 text-xs font-bold tracking-widest">
+                                        ╔═══ SOUTHBOUND QUEUE ═══╗
+                                    </div>
+                                    <TerminalPredictionTable
+                                        predictions={sbPredictions}
+                                        loading={loading}
+                                        onSelectTrain={setSelectedTrain}
+                                        selectedTrainId={selectedTrain?.TrainNumber}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
-                {/* Train Summary - Visible After Progress/Horizontal Views */}
+                {/* Train Approach View - Terminal Wrapped */}
                 {selectedTrain && (
-                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
-                        <TrainSummary
-                            train={selectedTrain}
-                            origin={origin}
-                            destination={destination !== "All" ? destination : undefined}
-                            etaToOriginMinutes={getTrainETA(selectedTrain, predictions)}
-                            etaToDestinationMinutes={
-                                destination && destination !== "All"
-                                    ? getTrainETA(selectedTrain, destinationPredictions)
-                                    : 0
-                            }
-                            trainReachedOrigin={false}
-                            stations={stations}
-                            currentTime={currentTime}
-                        />
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
+                        <div className="text-cyan-400 text-xs font-bold tracking-widest">
+                            ╔═══ APPROACH VISUALIZATION ═══╗
+                        </div>
+                        <div className="border border-cyan-500/50 p-4 bg-black">
+                            <TrainApproachViewSelector
+                                train={selectedTrain}
+                                origin={origin}
+                                stations={stations}
+                                destination={destination !== "All" ? destination : undefined}
+                                onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
+                                vehiclePositions={vehiclePositions}
+                                currentTime={currentTime}
+                                originPredictions={predictions}
+                                destinationPredictions={destinationPredictions}
+                                loading={loading}
+                                stationETAMap={stationETAMap}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {/* Train Summary - Terminal Wrapped */}
+                {selectedTrain && (
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
+                        <div className="text-pink-400 text-xs font-bold tracking-widest">
+                            ╔═══ JOURNEY DETAILS ═══╗
+                        </div>
+                        <div className="border border-pink-500/50 p-4 bg-black">
+                            <TrainSummary
+                                train={selectedTrain}
+                                origin={origin}
+                                destination={destination !== "All" ? destination : undefined}
+                                etaToOriginMinutes={getTrainETA(selectedTrain, predictions)}
+                                etaToDestinationMinutes={
+                                    destination && destination !== "All"
+                                        ? getTrainETA(selectedTrain, destinationPredictions)
+                                        : 0
+                                }
+                                trainReachedOrigin={false}
+                                stations={stations}
+                                currentTime={currentTime}
+                            />
+                        </div>
                     </div>
                 )}
 
@@ -569,118 +453,69 @@ export default function CaltrainDisplay() {
     );
 }
 
-interface PredictionTableProps {
+interface TerminalPredictionTableProps {
     predictions: TrainPrediction[];
     loading: boolean;
     onSelectTrain: (train: TrainPrediction) => void;
     selectedTrainId?: string;
-    theme: any;
 }
 
-function PredictionTable({
+function TerminalPredictionTable({
     predictions,
     loading,
     onSelectTrain,
     selectedTrainId,
-    theme,
-}: PredictionTableProps) {
+}: TerminalPredictionTableProps) {
+    if (loading) {
+        return (
+            <div className="space-y-2 text-cyan-400 font-mono text-xs">
+                <div className="text-green-500">█ SCANNING QUEUE...</div>
+            </div>
+        );
+    }
+
+    if (predictions.length === 0) {
+        return (
+            <div className="text-green-600 text-xs font-mono p-2">
+                [NO TRAINS IN QUEUE]
+            </div>
+        );
+    }
+
     return (
-        <div>
-            {loading ? (
-                <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                        <Skeleton key={i} className={`h-12 w-full ${theme.colors.bg.tertiary}`} />
-                    ))}
+        <div className="space-y-1">
+            {predictions.slice(0, 10).map((p) => (
+                <div
+                    key={p.TrainNumber}
+                    onClick={() => onSelectTrain(p)}
+                    className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${
+                        selectedTrainId === p.TrainNumber
+                            ? "border-l-cyan-400 bg-cyan-950/40 text-cyan-300"
+                            : "border-l-transparent hover:bg-cyan-950/20 text-cyan-400"
+                    }`}
+                >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <span className="text-yellow-300 font-bold w-16">#{p.TrainNumber}</span>
+                        <span className="text-pink-400 w-10">{p.TrainType.substring(0, 3).toUpperCase()}</span>
+                        <span className="text-cyan-300 w-16">{p.Departure}</span>
+                    </div>
+                    <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+                        <span className={`font-bold w-12 text-right ${
+                            p.delayStatus === "delayed" ? "text-red-400" :
+                            p.delayStatus === "early" ? "text-blue-400" : "text-green-400"
+                        }`}>
+                            {p.ETA}
+                        </span>
+                        {p.delayStatus && (
+                            <span className="text-green-600 text-[10px] w-8 text-right">
+                                {p.delayStatus === "on-time" ? "[OK]" :
+                                 p.delayStatus === "delayed" ? `[+${p.delayMinutes}]` :
+                                 `[−${Math.abs(p.delayMinutes!)}]`}
+                            </span>
+                        )}
+                    </div>
                 </div>
-            ) : predictions.length === 0 ? (
-                <div className={`${theme.colors.text.muted} text-center py-8`}>
-                    No trains scheduled
-                </div>
-            ) : (
-                <Table>
-                    <TableHeader>
-                        <TableRow className={`border-b ${theme.colors.ui.border}`}>
-                            <TableHead className={theme.colors.text.accent}>Train</TableHead>
-                            <TableHead className={theme.colors.text.accent}>Type</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Departure</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Status</TableHead>
-                            <TableHead className={`text-right ${theme.colors.text.accent}`}>ETA</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {predictions.slice(0, 8).map((p) => (
-                            <TableRow
-                                key={p.TrainNumber}
-                                onClick={() => onSelectTrain(p)}
-                                className={`cursor-pointer transition-colors ${
-                                    selectedTrainId === p.TrainNumber
-                                        ? `${theme.colors.bg.secondary} ${theme.colors.text.primary}`
-                                        : `${theme.colors.ui.hover} ${theme.colors.text.primary}`
-                                }`}
-                            >
-                                <TableCell className={`font-semibold ${theme.colors.text.primary}`}>
-                                    #{p.TrainNumber}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge
-                                        variant="outline"
-                                        className={`text-xs font-mono ${
-                                            p.TrainType === "Bullet"
-                                                ? "text-red-500 border-red-900 bg-red-950/30"
-                                                : p.TrainType === "Limited"
-                                                    ? "text-yellow-500 border-yellow-900 bg-yellow-950/30"
-                                                    : "text-green-500 border-green-900 bg-green-950/30"
-                                        }`}
-                                    >
-                                        {p.TrainType}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {p.delayStatus && (p.delayStatus === "delayed" || p.delayStatus === "early") ? (
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className={`line-through text-xs ${theme.colors.text.muted}`}>
-                                                {p.ScheduledTime}
-                                            </span>
-                                            <span
-                                                className={
-                                                    p.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"
-                                                }
-                                            >
-                                                {p.Departure}
-                                            </span>
-                                        </div>
-                                    ) : (
-                                        <span className="text-green-400">{p.Departure}</span>
-                                    )}
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    {p.delayStatus && (
-                                        <Badge
-                                            variant="outline"
-                                            className={`text-[10px] font-bold ${
-                                                p.delayStatus === "on-time"
-                                                    ? "text-green-400 border-green-700 bg-green-950/30"
-                                                    : p.delayStatus === "early"
-                                                        ? "text-blue-400 border-blue-700 bg-blue-950/30"
-                                                        : "text-red-400 border-red-700 bg-red-950/30"
-                                            }`}
-                                        >
-                                            {p.delayStatus === "on-time"
-                                                ? "ON TIME"
-                                                : p.delayStatus === "early"
-                                                    ? `${Math.abs(p.delayMinutes!)}m EARLY`
-                                                    : `${p.delayMinutes}m LATE`}
-                                        </Badge>
-                                    )}
-                                </TableCell>
-                                <TableCell className={`text-right font-bold ${theme.colors.text.primary} animate-pulse-slow`}>
-                                    {p.ETA}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            )}
+            ))}
         </div>
     );
 }
