@@ -19,9 +19,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "npx ts-node scripts/build-schedule.ts",
+    "prebuild": "npx tsx scripts/build-schedule.ts",
     "build": "next build",
-    "build-schedule": "npx ts-node scripts/build-schedule.ts",
+    "build-schedule": "npx tsx scripts/build-schedule.ts",
     "build:docker": "docker build -t railtime:latest .",
     "start": "next start",
     "start:docker": "docker-compose up",
