@@ -366,42 +366,52 @@ export default function CaltrainDisplay() {
                     </div>
                 )}
 
-                {/* Train Approach View - With Selector for Multiple Views */}
+                {/* Train Approach View - Brutalist Wrapped */}
                 {selectedTrain && (
-                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
-                        <TrainApproachViewSelector
-                            train={selectedTrain}
-                            origin={origin}
-                            stations={stations}
-                            destination={destination !== "All" ? destination : undefined}
-                            onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
-                            vehiclePositions={vehiclePositions}
-                            currentTime={currentTime}
-                            originPredictions={predictions}
-                            destinationPredictions={destinationPredictions}
-                            loading={loading}
-                            stationETAMap={stationETAMap}
-                        />
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
+                        <div className={`font-mono text-sm font-bold tracking-wide ${theme.colors.text.primary}`}>
+                            approach visualization
+                        </div>
+                        <div className={`border-l-4 border-dashed ${theme.colors.ui.border} pl-4 py-4`}>
+                            <TrainApproachViewSelector
+                                train={selectedTrain}
+                                origin={origin}
+                                stations={stations}
+                                destination={destination !== "All" ? destination : undefined}
+                                onClose={() => setSelectedTrain(filteredPredictions[0] || null)}
+                                vehiclePositions={vehiclePositions}
+                                currentTime={currentTime}
+                                originPredictions={predictions}
+                                destinationPredictions={destinationPredictions}
+                                loading={loading}
+                                stationETAMap={stationETAMap}
+                            />
+                        </div>
                     </div>
                 )}
 
-                {/* Train Summary - Visible After Progress/Horizontal Views */}
+                {/* Train Summary - Brutalist Wrapped */}
                 {selectedTrain && (
-                    <div className="animate-in slide-in-from-top-10 fade-in duration-500">
-                        <TrainSummary
-                            train={selectedTrain}
-                            origin={origin}
-                            destination={destination !== "All" ? destination : undefined}
-                            etaToOriginMinutes={getTrainETA(selectedTrain, predictions)}
-                            etaToDestinationMinutes={
-                                destination && destination !== "All"
-                                    ? getTrainETA(selectedTrain, destinationPredictions)
-                                    : 0
-                            }
-                            trainReachedOrigin={false}
-                            stations={stations}
-                            currentTime={currentTime}
-                        />
+                    <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
+                        <div className={`font-mono text-sm font-bold tracking-wide ${theme.colors.text.primary}`}>
+                            journey summary
+                        </div>
+                        <div className={`border-t border-b ${theme.colors.ui.divider} py-4`}>
+                            <TrainSummary
+                                train={selectedTrain}
+                                origin={origin}
+                                destination={destination !== "All" ? destination : undefined}
+                                etaToOriginMinutes={getTrainETA(selectedTrain, predictions)}
+                                etaToDestinationMinutes={
+                                    destination && destination !== "All"
+                                        ? getTrainETA(selectedTrain, destinationPredictions)
+                                        : 0
+                                }
+                                trainReachedOrigin={false}
+                                stations={stations}
+                                currentTime={currentTime}
+                            />
+                        </div>
                     </div>
                 )}
 
