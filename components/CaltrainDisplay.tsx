@@ -44,7 +44,7 @@ export default function CaltrainDisplay() {
     const destinationPredictionsRef = useRef<TrainPrediction[]>([]);
     const [vehiclePositions, setVehiclePositions] = useState<any[]>([]);
     const vehiclePositionsRef = useRef<any[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
     const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
@@ -110,11 +110,8 @@ export default function CaltrainDisplay() {
     const loadAllData = async () => {
         if (!origin || stations.length === 0) return;
 
-        // Only show loading state on initial load (when predictions is empty)
-        const isInitialLoad = predictions.length === 0;
-        if (isInitialLoad) {
-            setLoading(true);
-        }
+        // Show updating spinner during API calls (visible in corner, never blocks table)
+        setIsUpdating(true);
         const now = new Date();
 
         try {
@@ -197,11 +194,9 @@ export default function CaltrainDisplay() {
             setLastUpdated(now);
         } catch (error) {
             console.error("Error fetching data:", error);
-        }
-
-        // Only clear loading state if it was set (initial load)
-        if (isInitialLoad) {
-            setLoading(false);
+        } finally {
+            // Always clear updating state when done
+            setIsUpdating(false);
         }
     };
 
@@ -366,7 +361,13 @@ export default function CaltrainDisplay() {
                         <span className="text-cyan-400">
                             {lastUpdated && `LAST UPDATE: ${lastUpdated.toLocaleTimeString()}`}
                         </span>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
+                            {/* Updating spinner - spins during API calls, doesn't block layout */}
+                            {isUpdating && (
+                                <div className="animate-spin inline-block">
+                                    <div className="text-green-500">⟳</div>
+                                </div>
+                            )}
                             <TerminalThemeSwitcher />
                             {stations.length > 0 && <TerminalSettingsModal stations={stations} />}
                         </div>
@@ -437,7 +438,7 @@ export default function CaltrainDisplay() {
                                 onClick={loadAllData}
                                 className="bg-black border border-green-500/50 text-green-400 hover:bg-green-950/30 h-7 text-xs font-mono w-full"
                             >
-                                {loading ? "█ SCANNING..." : "▶ REFRESH"}
+                                {isUpdating ? "█ UPDATING..." : "▶ REFRESH"}
                             </Button>
                         </div>
                     )}
@@ -500,7 +501,6 @@ export default function CaltrainDisplay() {
                                 </div>
                                 <TerminalPredictionTable
                                     predictions={journeyDirection === "NB" ? displayNBPredictions : displaySBPredictions}
-                                    loading={loading}
                                     onSelectTrain={setSelectedTrain}
                                     selectedTrainId={selectedTrain?.TrainNumber}
                                     recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
@@ -514,7 +514,6 @@ export default function CaltrainDisplay() {
                                     </div>
                                     <TerminalPredictionTable
                                         predictions={displayNBPredictions}
-                                        loading={loading}
                                         onSelectTrain={setSelectedTrain}
                                         selectedTrainId={selectedTrain?.TrainNumber}
                                         recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
@@ -526,7 +525,6 @@ export default function CaltrainDisplay() {
                                     </div>
                                     <TerminalPredictionTable
                                         predictions={displaySBPredictions}
-                                        loading={loading}
                                         onSelectTrain={setSelectedTrain}
                                         selectedTrainId={selectedTrain?.TrainNumber}
                                         recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
@@ -554,7 +552,6 @@ export default function CaltrainDisplay() {
                                 currentTime={new Date()}
                                 originPredictions={predictions}
                                 destinationPredictions={destinationPredictions}
-                                loading={loading}
                                 stationETAMap={stationETAMap}
                             />
                         </div>
@@ -607,7 +604,6 @@ export default function CaltrainDisplay() {
 
 interface TerminalPredictionTableProps {
     predictions: TrainPrediction[];
-    loading: boolean;
     onSelectTrain: (train: TrainPrediction) => void;
     selectedTrainId?: string;
     recentlyPassedTrainId?: string;
@@ -615,19 +611,10 @@ interface TerminalPredictionTableProps {
 
 const TerminalPredictionTable = memo(function TerminalPredictionTable({
     predictions,
-    loading,
     onSelectTrain,
     selectedTrainId,
     recentlyPassedTrainId,
 }: TerminalPredictionTableProps) {
-    if (loading) {
-        return (
-            <div className="space-y-2 text-cyan-400 font-mono text-xs">
-                <div className="text-green-500">█ SCANNING QUEUE...</div>
-            </div>
-        );
-    }
-
     if (predictions.length === 0) {
         return (
             <div className="text-green-600 text-xs font-mono p-2">

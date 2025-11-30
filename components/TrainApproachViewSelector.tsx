@@ -15,7 +15,6 @@ interface TrainApproachViewSelectorProps {
     currentTime?: Date;
     originPredictions?: TrainPrediction[];
     destinationPredictions?: TrainPrediction[];
-    loading?: boolean;
     stationETAMap?: Record<string, { etaMinutes: number; arrivalTime: string }>;
 }
 
@@ -31,7 +30,6 @@ export default function TrainApproachViewSelector({
     currentTime = new Date(),
     originPredictions = [],
     destinationPredictions = [],
-    loading = false,
     stationETAMap,
 }: TrainApproachViewSelectorProps) {
     const [viewType, setViewType] = useState<ViewType>('progress');
@@ -75,7 +73,6 @@ export default function TrainApproachViewSelector({
                     currentTime={currentTime}
                     originPredictions={originPredictions}
                     destinationPredictions={destinationPredictions}
-                    loading={loading}
                     stationETAMap={stationETAMap}
                 />
             ) : (
@@ -88,7 +85,6 @@ export default function TrainApproachViewSelector({
                     currentTime={currentTime}
                     originPredictions={originPredictions}
                     destinationPredictions={destinationPredictions}
-                    loading={loading}
                     stationETAMap={stationETAMap}
                 />
             )}
