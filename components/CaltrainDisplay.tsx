@@ -39,7 +39,9 @@ export default function CaltrainDisplay() {
     const [origin, setOrigin] = useState<string>("");
     const [destination, setDestination] = useState<string>("");
     const [predictions, setPredictions] = useState<TrainPrediction[]>([]);
+    const predictionsRef = useRef<TrainPrediction[]>([]);
     const [destinationPredictions, setDestinationPredictions] = useState<TrainPrediction[]>([]);
+    const destinationPredictionsRef = useRef<TrainPrediction[]>([]);
     const [vehiclePositions, setVehiclePositions] = useState<any[]>([]);
     const vehiclePositionsRef = useRef<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -76,6 +78,34 @@ export default function CaltrainDisplay() {
         });
     }, []);
 
+    /**
+     * Compare two prediction arrays for meaningful changes.
+     * Returns true if arrays are functionally different (should update state).
+     * Only compares fields that would affect visible UI rendering.
+     */
+    const predictionsChanged = (prev: TrainPrediction[], next: TrainPrediction[]): boolean => {
+        if (prev.length !== next.length) return true;
+
+        for (let i = 0; i < prev.length; i++) {
+            const p = prev[i];
+            const n = next[i];
+
+            // Compare train identity and key display properties
+            if (
+                p.TrainNumber !== n.TrainNumber ||
+                p.Direction !== n.Direction ||
+                p.TrainType !== n.TrainType ||
+                p.ETA !== n.ETA ||
+                p.Departure !== n.Departure ||
+                p.delayStatus !== n.delayStatus ||
+                p.delayMinutes !== n.delayMinutes
+            ) {
+                return true;
+            }
+        }
+        return false;
+    };
+
     // Unified data fetch - fetches everything every 10 seconds
     const loadAllData = async () => {
         if (!origin || stations.length === 0) return;
@@ -88,7 +118,12 @@ export default function CaltrainDisplay() {
             const originStation = stations.find((s) => s.stopname === origin);
             if (originStation) {
                 const originPreds = await fetchPredictions(originStation);
-                setPredictions(originPreds);
+
+                // Only update state if predictions meaningfully changed
+                if (predictionsChanged(predictionsRef.current, originPreds)) {
+                    predictionsRef.current = originPreds;
+                    setPredictions(originPreds);
+                }
 
                 // Track recently passed trains
                 // If a train was previously selected and now doesn't appear in predictions,
@@ -114,10 +149,18 @@ export default function CaltrainDisplay() {
                 const destStation = stations.find((s) => s.stopname === destination);
                 if (destStation) {
                     const destPreds = await fetchPredictions(destStation);
-                    setDestinationPredictions(destPreds);
+                    // Only update state if destination predictions meaningfully changed
+                    if (predictionsChanged(destinationPredictionsRef.current, destPreds)) {
+                        destinationPredictionsRef.current = destPreds;
+                        setDestinationPredictions(destPreds);
+                    }
                 }
             } else {
-                setDestinationPredictions([]);
+                // Clear if no destination selected
+                if (destinationPredictionsRef.current.length > 0) {
+                    destinationPredictionsRef.current = [];
+                    setDestinationPredictions([]);
+                }
             }
 
             // Fetch vehicle positions and only update if data meaningfully changed
