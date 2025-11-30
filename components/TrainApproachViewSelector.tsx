@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { TrainPrediction, Station } from "@/lib/types";
-import EnhancedHorizontalView from "./prototypes/EnhancedHorizontalView";
-import AnimatedProgressView from "./prototypes/AnimatedProgressView";
-import { Button } from "@/components/ui/button";
-import { LayoutList, LayoutTemplate } from "lucide-react";
+import TerminalCorridorView from "./TerminalCorridorView";
+import TerminalTimelineView from "./TerminalTimelineView";
 
 interface TrainApproachViewSelectorProps {
     train: TrainPrediction;
@@ -40,31 +38,35 @@ export default function TrainApproachViewSelector({
 
     return (
         <div className="relative">
-            {/* View Selector Buttons - Top Right */}
-            <div className="absolute top-4 right-4 z-50 flex gap-1 bg-slate-900/90 backdrop-blur-sm p-1.5 rounded-lg border border-slate-700">
-                <Button
-                    variant={viewType === 'horizontal' ? 'default' : 'outline'}
-                    size="sm"
+            {/* View Selector Buttons - Terminal Style */}
+            <div className="absolute top-4 right-4 z-50 flex gap-2 bg-black border-2 border-cyan-400 p-2" style={{boxShadow: '0 0 20px rgba(6, 182, 212, 0.2)'}}>
+                <button
                     onClick={() => setViewType('horizontal')}
-                    className="p-1.5 h-auto w-auto"
+                    className={`px-3 py-1 font-mono text-xs tracking-widest transition-colors border ${
+                        viewType === 'horizontal'
+                            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-300'
+                            : 'border-green-500/50 bg-green-950/20 text-green-400 hover:bg-green-950/40'
+                    }`}
                     title="Corridor - Horizontal track view"
                 >
-                    <LayoutTemplate className="h-5 w-5" />
-                </Button>
-                <Button
-                    variant={viewType === 'progress' ? 'default' : 'outline'}
-                    size="sm"
+                    [CORRIDOR]
+                </button>
+                <button
                     onClick={() => setViewType('progress')}
-                    className="p-1.5 h-auto w-auto"
+                    className={`px-3 py-1 font-mono text-xs tracking-widest transition-colors border ${
+                        viewType === 'progress'
+                            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-300'
+                            : 'border-green-500/50 bg-green-950/20 text-green-400 hover:bg-green-950/40'
+                    }`}
                     title="Timeline - Vertical progress view"
                 >
-                    <LayoutList className="h-5 w-5" />
-                </Button>
+                    [TIMELINE]
+                </button>
             </div>
 
             {/* Render Selected View */}
             {viewType === 'horizontal' ? (
-                <EnhancedHorizontalView
+                <TerminalCorridorView
                     train={train}
                     origin={origin}
                     stations={stations}
@@ -77,7 +79,7 @@ export default function TrainApproachViewSelector({
                     stationETAMap={stationETAMap}
                 />
             ) : (
-                <AnimatedProgressView
+                <TerminalTimelineView
                     train={train}
                     origin={origin}
                     stations={stations}
