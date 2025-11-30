@@ -110,7 +110,11 @@ export default function CaltrainDisplay() {
     const loadAllData = async () => {
         if (!origin || stations.length === 0) return;
 
-        setLoading(true);
+        // Only show loading state on initial load (when predictions is empty)
+        const isInitialLoad = predictions.length === 0;
+        if (isInitialLoad) {
+            setLoading(true);
+        }
         const now = new Date();
 
         try {
@@ -195,7 +199,10 @@ export default function CaltrainDisplay() {
             console.error("Error fetching data:", error);
         }
 
-        setLoading(false);
+        // Only clear loading state if it was set (initial load)
+        if (isInitialLoad) {
+            setLoading(false);
+        }
     };
 
     // Load last passed train from localStorage on mount
