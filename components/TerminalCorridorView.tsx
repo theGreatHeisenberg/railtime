@@ -79,7 +79,7 @@ export default function TerminalCorridorView({
 
     // Build simple corridor with only key elements
     const buildCorridorDots = () => {
-        const dots: Array<{ type: 'station' | 'train' | 'separator'; color: string; label?: string; hiddenCount?: number }> = [];
+        const dots: Array<{ type: 'station' | 'train' | 'separator'; color: string; label?: string; hiddenCount?: number; isDotted?: boolean }> = [];
 
         // Find most recently passed station (closest to train but before it)
         let recentlyPassedIdx = -1;
@@ -96,6 +96,25 @@ export default function TerminalCorridorView({
                 if (distToPassed < closestDistToPassed) {
                     closestDistToPassed = distToPassed;
                     recentlyPassedIdx = i;
+                }
+            }
+        }
+
+        // Find nearest upcoming station (closest to train but after it)
+        let nearestUpcomingIdx = -1;
+        let closestDistToUpcoming = Infinity;
+
+        for (let i = 0; i < normalizedStations.length; i++) {
+            const stationProgress = normalizedStations[i].percent / 100;
+            const isUpcoming = train.Direction === "SB"
+                ? stationProgress < trainProgress
+                : stationProgress > trainProgress;
+
+            if (isUpcoming) {
+                const distToUpcoming = Math.abs(stationProgress - trainProgress);
+                if (distToUpcoming < closestDistToUpcoming) {
+                    closestDistToUpcoming = distToUpcoming;
+                    nearestUpcomingIdx = i;
                 }
             }
         }
@@ -123,7 +142,7 @@ export default function TerminalCorridorView({
 
         dots.push({ type: 'train', color: 'text-green-400' });
 
-        // Count stations between train and origin
+        // Count stations between train and origin, use dotted separator if origin is nearest upcoming
         let hiddenToOrigin = 0;
         if (originIdx !== -1) {
             const minIdx = Math.min(trainIdx, originIdx);
@@ -131,7 +150,13 @@ export default function TerminalCorridorView({
             for (let i = minIdx + 1; i < maxIdx; i++) {
                 hiddenToOrigin++;
             }
-            dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenToOrigin > 0 ? hiddenToOrigin : undefined });
+            const isDottedSeparator = originIdx === nearestUpcomingIdx;
+            dots.push({
+                type: 'separator',
+                color: 'text-cyan-600',
+                hiddenCount: hiddenToOrigin > 0 ? hiddenToOrigin : undefined,
+                isDotted: isDottedSeparator
+            });
 
             const station = normalizedStations[originIdx];
             dots.push({ type: 'station', color: 'text-blue-400', label: station.stopname });
@@ -145,7 +170,13 @@ export default function TerminalCorridorView({
             for (let i = minIdx + 1; i < maxIdx; i++) {
                 hiddenToDest++;
             }
-            dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenToDest > 0 ? hiddenToDest : undefined });
+            const isDottedSeparator = destIdx === nearestUpcomingIdx;
+            dots.push({
+                type: 'separator',
+                color: 'text-cyan-600',
+                hiddenCount: hiddenToDest > 0 ? hiddenToDest : undefined,
+                isDotted: isDottedSeparator
+            });
             const station = normalizedStations[destIdx];
             dots.push({ type: 'station', color: 'text-orange-400', label: station.stopname });
         }
@@ -212,7 +243,7 @@ export default function TerminalCorridorView({
                                 {dot.type === 'train'
                                     ? (train.Direction === "SB" ? "◀" : "▶")
                                     : dot.type === 'separator'
-                                    ? "---"
+                                    ? (dot.isDotted ? "···" : "---")
                                     : "●"
                                 }
                             </span>

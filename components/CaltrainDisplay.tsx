@@ -46,6 +46,7 @@ export default function CaltrainDisplay() {
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
     const [currentTime, setCurrentTime] = useState<Date>(new Date());
     const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
+    const [lastPassedTrainId, setLastPassedTrainId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchStations().then((data) => {
@@ -88,6 +89,24 @@ export default function CaltrainDisplay() {
             if (originStation) {
                 const originPreds = await fetchPredictions(originStation);
                 setPredictions(originPreds);
+
+                // Track recently passed trains
+                // If a train was previously selected and now doesn't appear in predictions,
+                // it likely has passed or been filtered out
+                if (selectedTrain && !originPreds.find(p => p.TrainNumber === selectedTrain.TrainNumber)) {
+                    // Check if this train should be stored as the last passed train
+                    const savedLastPassed = localStorage.getItem(`lastPassedTrain_${origin}`);
+                    const savedTime = localStorage.getItem(`lastPassedTime_${origin}`);
+                    const now_ms = new Date().getTime();
+                    const savedTime_ms = savedTime ? parseInt(savedTime) : 0;
+
+                    // Update if this is more recent (within last 2 minutes)
+                    if (now_ms - savedTime_ms > 120000 || !savedLastPassed) {
+                        localStorage.setItem(`lastPassedTrain_${origin}`, selectedTrain.TrainNumber);
+                        localStorage.setItem(`lastPassedTime_${origin}`, now_ms.toString());
+                        setLastPassedTrainId(selectedTrain.TrainNumber);
+                    }
+                }
             }
 
             // Fetch destination predictions
@@ -114,6 +133,26 @@ export default function CaltrainDisplay() {
 
         setLoading(false);
     };
+
+    // Load last passed train from localStorage on mount
+    useEffect(() => {
+        const savedTrainId = localStorage.getItem(`lastPassedTrain_${origin}`);
+        const savedTime = localStorage.getItem(`lastPassedTime_${origin}`);
+
+        if (savedTrainId && savedTime) {
+            const savedTime_ms = parseInt(savedTime);
+            const now_ms = new Date().getTime();
+            // Keep the passed train visible for 5 minutes
+            if (now_ms - savedTime_ms < 300000) {
+                setLastPassedTrainId(savedTrainId);
+            } else {
+                // Clear if older than 5 minutes
+                localStorage.removeItem(`lastPassedTrain_${origin}`);
+                localStorage.removeItem(`lastPassedTime_${origin}`);
+                setLastPassedTrainId(null);
+            }
+        }
+    }, [origin]);
 
     // Initial load and set up unified 10-second refresh interval
     useEffect(() => {
@@ -156,6 +195,29 @@ export default function CaltrainDisplay() {
 
     const nbPredictions = filteredPredictions.filter((p) => p.Direction === "NB");
     const sbPredictions = filteredPredictions.filter((p) => p.Direction === "SB");
+
+    // Get recently passed train from state (tracked via localStorage)
+    // Create a mock train object with just the ID if we have a lastPassedTrainId
+    const recentlyPassedTrain = lastPassedTrainId
+        ? {
+            TrainNumber: lastPassedTrainId,
+            Direction: "NB", // Will be overridden by display logic
+            ETA: "PASSED",
+            Departure: "--:--",
+            TrainType: "",
+            delayStatus: "on-time",
+            delayMinutes: 0
+          } as TrainPrediction
+        : null;
+
+    // Add recently passed train to display if it exists and not already in filtered list
+    const displayNBPredictions = recentlyPassedTrain && !nbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
+        ? [recentlyPassedTrain, ...nbPredictions]
+        : nbPredictions;
+
+    const displaySBPredictions = recentlyPassedTrain && !sbPredictions.find(p => p.TrainNumber === recentlyPassedTrain.TrainNumber)
+        ? [recentlyPassedTrain, ...sbPredictions]
+        : sbPredictions;
 
     // Auto-select the first train when predictions update
     useEffect(() => {
@@ -343,7 +405,7 @@ export default function CaltrainDisplay() {
 
 
                 {/* PREDICTIONS PANEL - Train Predictions with Terminal Styling */}
-                {(!journeyDirection || (journeyDirection === "NB" && nbPredictions.length > 0) || (journeyDirection === "SB" && sbPredictions.length > 0) || (!journeyDirection && (nbPredictions.length > 0 || sbPredictions.length > 0))) && (
+                {(!journeyDirection || (journeyDirection === "NB" && displayNBPredictions.length > 0) || (journeyDirection === "SB" && displaySBPredictions.length > 0) || (!journeyDirection && (displayNBPredictions.length > 0 || displaySBPredictions.length > 0))) && (
                     <div className="space-y-3">
                         {journeyDirection ? (
                             <>
@@ -351,10 +413,11 @@ export default function CaltrainDisplay() {
                                     ╔═══ {journeyDirection === "NB" ? "NORTHBOUND" : "SOUTHBOUND"} QUEUE ═══╗
                                 </div>
                                 <TerminalPredictionTable
-                                    predictions={journeyDirection === "NB" ? nbPredictions : sbPredictions}
+                                    predictions={journeyDirection === "NB" ? displayNBPredictions : displaySBPredictions}
                                     loading={loading}
                                     onSelectTrain={setSelectedTrain}
                                     selectedTrainId={selectedTrain?.TrainNumber}
+                                    recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
                                 />
                             </>
                         ) : (
@@ -364,10 +427,11 @@ export default function CaltrainDisplay() {
                                         ╔═══ NORTHBOUND QUEUE ═══╗
                                     </div>
                                     <TerminalPredictionTable
-                                        predictions={nbPredictions}
+                                        predictions={displayNBPredictions}
                                         loading={loading}
                                         onSelectTrain={setSelectedTrain}
                                         selectedTrainId={selectedTrain?.TrainNumber}
+                                        recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
                                     />
                                 </div>
                                 <div className="space-y-3">
@@ -375,10 +439,11 @@ export default function CaltrainDisplay() {
                                         ╔═══ SOUTHBOUND QUEUE ═══╗
                                     </div>
                                     <TerminalPredictionTable
-                                        predictions={sbPredictions}
+                                        predictions={displaySBPredictions}
                                         loading={loading}
                                         onSelectTrain={setSelectedTrain}
                                         selectedTrainId={selectedTrain?.TrainNumber}
+                                        recentlyPassedTrainId={recentlyPassedTrain?.TrainNumber}
                                     />
                                 </div>
                             </div>
@@ -459,6 +524,7 @@ interface TerminalPredictionTableProps {
     loading: boolean;
     onSelectTrain: (train: TrainPrediction) => void;
     selectedTrainId?: string;
+    recentlyPassedTrainId?: string;
 }
 
 function TerminalPredictionTable({
@@ -466,6 +532,7 @@ function TerminalPredictionTable({
     loading,
     onSelectTrain,
     selectedTrainId,
+    recentlyPassedTrainId,
 }: TerminalPredictionTableProps) {
     if (loading) {
         return (
@@ -485,23 +552,32 @@ function TerminalPredictionTable({
 
     return (
         <div className="space-y-1">
-            {predictions.slice(0, 10).map((p) => (
+            {predictions.slice(0, 10).map((p) => {
+                const isPassed = recentlyPassedTrainId === p.TrainNumber;
+                return (
                 <div
                     key={p.TrainNumber}
                     onClick={() => onSelectTrain(p)}
                     className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${
                         selectedTrainId === p.TrainNumber
                             ? "border-l-cyan-400 bg-cyan-950/40 text-cyan-300"
+                            : isPassed
+                            ? "border-l-green-600 bg-green-950/30 text-green-400 opacity-80"
                             : "border-l-transparent hover:bg-cyan-950/20 text-cyan-400"
                     }`}
                 >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                         <span className="text-yellow-300 font-bold w-16">#{p.TrainNumber}</span>
-                        <span className="text-pink-400 w-10">{p.TrainType.substring(0, 3).toUpperCase()}</span>
-                        <span className="text-cyan-300 w-16">{p.Departure}</span>
+                        <span className={`w-10 ${isPassed ? "text-green-600" : "text-pink-400"}`}>
+                            {isPassed ? "PAST" : p.TrainType.substring(0, 3).toUpperCase()}
+                        </span>
+                        <span className={`w-16 ${isPassed ? "text-green-600" : "text-cyan-300"}`}>
+                            {p.Departure}
+                        </span>
                     </div>
                     <div className="flex items-center gap-2 ml-auto flex-shrink-0">
                         <span className={`font-bold w-12 text-right ${
+                            isPassed ? "text-green-500" :
                             p.delayStatus === "delayed" ? "text-red-400" :
                             p.delayStatus === "early" ? "text-blue-400" : "text-green-400"
                         }`}>
@@ -516,7 +592,8 @@ function TerminalPredictionTable({
                         )}
                     </div>
                 </div>
-            ))}
+                );
+            })}
         </div>
     );
 }
