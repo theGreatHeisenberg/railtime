@@ -15,6 +15,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Train } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import dynamic from "next/dynamic";
 import SettingsModal from "./SettingsModal";
 import TrainApproachViewSelector from "./TrainApproachViewSelector";
@@ -327,30 +336,58 @@ export default function CaltrainDisplay() {
                 </Card>
                 )}
 
-                {/* Tabular View - Train Predictions Grid */}
-                <div className={`grid gap-6 ${journeyDirection ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
-                    {/* Show Northbound if direction is NB or null (All) */}
-                    {(!journeyDirection || journeyDirection === "NB") && (
-                        <PredictionBoard
-                            title="Northbound"
-                            predictions={nbPredictions}
-                            loading={loading}
-                            onSelectTrain={setSelectedTrain}
-                            selectedTrainId={selectedTrain?.TrainNumber}
-                        />
-                    )}
-
-                    {/* Show Southbound if direction is SB or null (All) */}
-                    {(!journeyDirection || journeyDirection === "SB") && (
-                        <PredictionBoard
-                            title="Southbound"
-                            predictions={sbPredictions}
-                            loading={loading}
-                            onSelectTrain={setSelectedTrain}
-                            selectedTrainId={selectedTrain?.TrainNumber}
-                        />
-                    )}
-                </div>
+                {/* Tabular View - Train Predictions with Tabs */}
+                {(!journeyDirection || (journeyDirection === "NB" && nbPredictions.length > 0) || (journeyDirection === "SB" && sbPredictions.length > 0) || (!journeyDirection && (nbPredictions.length > 0 || sbPredictions.length > 0))) && (
+                    <Card className={`${theme.colors.bg.card} border ${theme.colors.ui.border}`}>
+                        <CardHeader className={`${theme.colors.bg.secondary} border-b ${theme.colors.ui.border}`}>
+                            <CardTitle className={`${theme.colors.text.primary}`}>
+                                {journeyDirection ? (journeyDirection === "NB" ? "Northbound" : "Southbound") : "Train Predictions"}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-4">
+                            {journeyDirection ? (
+                                // Single direction view (streamlined)
+                                <PredictionTable
+                                    predictions={journeyDirection === "NB" ? nbPredictions : sbPredictions}
+                                    loading={loading}
+                                    onSelectTrain={setSelectedTrain}
+                                    selectedTrainId={selectedTrain?.TrainNumber}
+                                    theme={theme}
+                                />
+                            ) : (
+                                // Both directions - use tabs
+                                <Tabs defaultValue="northbound" className="w-full">
+                                    <TabsList className={`grid w-full grid-cols-2 ${theme.colors.bg.tertiary}`}>
+                                        <TabsTrigger value="northbound" className={`${theme.colors.text.primary}`}>
+                                            Northbound ({nbPredictions.length})
+                                        </TabsTrigger>
+                                        <TabsTrigger value="southbound" className={`${theme.colors.text.primary}`}>
+                                            Southbound ({sbPredictions.length})
+                                        </TabsTrigger>
+                                    </TabsList>
+                                    <TabsContent value="northbound" className="mt-4">
+                                        <PredictionTable
+                                            predictions={nbPredictions}
+                                            loading={loading}
+                                            onSelectTrain={setSelectedTrain}
+                                            selectedTrainId={selectedTrain?.TrainNumber}
+                                            theme={theme}
+                                        />
+                                    </TabsContent>
+                                    <TabsContent value="southbound" className="mt-4">
+                                        <PredictionTable
+                                            predictions={sbPredictions}
+                                            loading={loading}
+                                            onSelectTrain={setSelectedTrain}
+                                            selectedTrainId={selectedTrain?.TrainNumber}
+                                            theme={theme}
+                                        />
+                                    </TabsContent>
+                                </Tabs>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 {/* Train Approach View - With Selector for Multiple Views */}
                 {selectedTrain && (
@@ -413,105 +450,118 @@ export default function CaltrainDisplay() {
     );
 }
 
-function PredictionBoard({
-    title,
-    predictions,
-    loading,
-    onSelectTrain,
-    selectedTrainId,
-}: {
-    title: string;
+interface PredictionTableProps {
     predictions: TrainPrediction[];
     loading: boolean;
     onSelectTrain: (train: TrainPrediction) => void;
     selectedTrainId?: string;
-}) {
-    return (
-        <Card className="bg-black border-4 border-slate-800 shadow-2xl overflow-hidden">
-            <CardHeader className="bg-slate-900 border-b border-slate-800 py-3">
-                <CardTitle className="text-center text-yellow-500 font-mono text-2xl tracking-wider uppercase">
-                    {title}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-                <div className="bg-black p-4 min-h-[300px]">
-                    <div className="grid grid-cols-4 gap-2 text-slate-500 text-xs uppercase tracking-widest mb-2 border-b border-slate-800 pb-2 font-mono">
-                        <div>Train</div>
-                        <div>Type</div>
-                        <div className="text-right">Departs</div>
-                        <div className="text-right">Status</div>
-                    </div>
+    theme: any;
+}
 
-                    {loading ? (
-                        <div className="space-y-2 mt-4">
-                            {[1, 2, 3].map((i) => (
-                                <Skeleton key={i} className="h-8 w-full bg-slate-900" />
-                            ))}
-                        </div>
-                    ) : predictions.length === 0 ? (
-                        <div className="text-slate-600 text-center py-10 font-mono">
-                            NO TRAINS SCHEDULED
-                        </div>
-                    ) : (
-                        <div className="space-y-1">
-                            {predictions.slice(0, 6).map((p) => (
-                                <div
-                                    key={p.TrainNumber}
-                                    onClick={() => onSelectTrain(p)}
-                                    className={`
-                                        grid grid-cols-4 gap-2 items-center font-mono text-lg border-b border-slate-900/50 pb-1 cursor-pointer transition-colors
-                                        ${selectedTrainId === p.TrainNumber ? "bg-slate-800 text-yellow-400" : "text-yellow-500 hover:bg-slate-900"}
-                                    `}
-                                >
-                                    <div>{p.TrainNumber}</div>
-                                    <div>
+function PredictionTable({
+    predictions,
+    loading,
+    onSelectTrain,
+    selectedTrainId,
+    theme,
+}: PredictionTableProps) {
+    return (
+        <div>
+            {loading ? (
+                <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className={`h-12 w-full ${theme.colors.bg.tertiary}`} />
+                    ))}
+                </div>
+            ) : predictions.length === 0 ? (
+                <div className={`${theme.colors.text.muted} text-center py-8`}>
+                    No trains scheduled
+                </div>
+            ) : (
+                <Table>
+                    <TableHeader>
+                        <TableRow className={`border-b ${theme.colors.ui.border}`}>
+                            <TableHead className={theme.colors.text.accent}>Train</TableHead>
+                            <TableHead className={theme.colors.text.accent}>Type</TableHead>
+                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Departure</TableHead>
+                            <TableHead className={`text-right ${theme.colors.text.accent}`}>Status</TableHead>
+                            <TableHead className={`text-right ${theme.colors.text.accent}`}>ETA</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {predictions.slice(0, 8).map((p) => (
+                            <TableRow
+                                key={p.TrainNumber}
+                                onClick={() => onSelectTrain(p)}
+                                className={`cursor-pointer transition-colors ${
+                                    selectedTrainId === p.TrainNumber
+                                        ? `${theme.colors.bg.secondary} ${theme.colors.text.primary}`
+                                        : `${theme.colors.ui.hover} ${theme.colors.text.primary}`
+                                }`}
+                            >
+                                <TableCell className={`font-semibold ${theme.colors.text.primary}`}>
+                                    #{p.TrainNumber}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge
+                                        variant="outline"
+                                        className={`text-xs font-mono ${
+                                            p.TrainType === "Bullet"
+                                                ? "text-red-500 border-red-900 bg-red-950/30"
+                                                : p.TrainType === "Limited"
+                                                    ? "text-yellow-500 border-yellow-900 bg-yellow-950/30"
+                                                    : "text-green-500 border-green-900 bg-green-950/30"
+                                        }`}
+                                    >
+                                        {p.TrainType}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {p.delayStatus && (p.delayStatus === "delayed" || p.delayStatus === "early") ? (
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className={`line-through text-xs ${theme.colors.text.muted}`}>
+                                                {p.ScheduledTime}
+                                            </span>
+                                            <span
+                                                className={
+                                                    p.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"
+                                                }
+                                            >
+                                                {p.Departure}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-green-400">{p.Departure}</span>
+                                    )}
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    {p.delayStatus && (
                                         <Badge
                                             variant="outline"
-                                            className={`
-                        ${p.TrainType === "Bullet" ? "text-red-500 border-red-900 bg-red-950/30" : ""}
-                        ${p.TrainType === "Limited" ? "text-yellow-500 border-yellow-900 bg-yellow-950/30" : ""}
-                        ${p.TrainType === "Local" ? "text-green-500 border-green-900 bg-green-950/30" : ""}
-                        font-mono text-xs px-1 py-0 h-5
-                      `}
+                                            className={`text-[10px] font-bold ${
+                                                p.delayStatus === "on-time"
+                                                    ? "text-green-400 border-green-700 bg-green-950/30"
+                                                    : p.delayStatus === "early"
+                                                        ? "text-blue-400 border-blue-700 bg-blue-950/30"
+                                                        : "text-red-400 border-red-700 bg-red-950/30"
+                                            }`}
                                         >
-                                            {p.TrainType}
+                                            {p.delayStatus === "on-time"
+                                                ? "ON TIME"
+                                                : p.delayStatus === "early"
+                                                    ? `${Math.abs(p.delayMinutes!)}m EARLY`
+                                                    : `${p.delayMinutes}m LATE`}
                                         </Badge>
-                                    </div>
-                                    <div className="text-right">
-                                        {/* Only show strikethrough for significant delays (>2 min), aligned with badge logic */}
-                                        {p.delayStatus && (p.delayStatus === "delayed" || p.delayStatus === "early") ? (
-                                            <div className="flex flex-col items-end">
-                                                <span className="line-through text-slate-500 text-xs">{p.ScheduledTime}</span>
-                                                <span className={p.delayStatus === "delayed" ? "text-red-400" : "text-blue-400"}>{p.Departure}</span>
-                                            </div>
-                                        ) : (
-                                            <span className="text-green-400">{p.Departure}</span>
-                                        )}
-                                    </div>
-                                    <div className="text-right flex items-center justify-end gap-2">
-                                        <span className="font-bold animate-pulse-slow">{p.ETA}</span>
-                                        {p.delayStatus && (
-                                            <Badge
-                                                variant="outline"
-                                                className={`
-                                                    text-[10px] px-1.5 py-0 h-4 font-bold
-                                                    ${p.delayStatus === "on-time" ? "text-green-400 border-green-700 bg-green-950/30" : ""}
-                                                    ${p.delayStatus === "early" ? "text-blue-400 border-blue-700 bg-blue-950/30" : ""}
-                                                    ${p.delayStatus === "delayed" ? "text-red-400 border-red-700 bg-red-950/30" : ""}
-                                                `}
-                                            >
-                                                {p.delayStatus === "on-time" && "ON TIME"}
-                                                {p.delayStatus === "early" && `${Math.abs(p.delayMinutes!)}m EARLY`}
-                                                {p.delayStatus === "delayed" && `${p.delayMinutes}m LATE`}
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
+                                    )}
+                                </TableCell>
+                                <TableCell className={`text-right font-bold ${theme.colors.text.primary} animate-pulse-slow`}>
+                                    {p.ETA}
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            )}
+        </div>
     );
 }
