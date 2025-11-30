@@ -45,6 +45,7 @@ export default function CaltrainDisplay() {
     const [vehiclePositions, setVehiclePositions] = useState<any[]>([]);
     const vehiclePositionsRef = useRef<any[]>([]);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [showLoadingSpinners, setShowLoadingSpinners] = useState(false);
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
     const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
@@ -199,6 +200,16 @@ export default function CaltrainDisplay() {
             setIsUpdating(false);
         }
     };
+
+    // Show loading spinners briefly during updates for visual feedback
+    useEffect(() => {
+        if (isUpdating) {
+            setShowLoadingSpinners(true);
+            // Show spinners for a brief moment (200ms) after update starts
+            const timer = setTimeout(() => setShowLoadingSpinners(false), 200);
+            return () => clearTimeout(timer);
+        }
+    }, [isUpdating]);
 
     // Load last passed train from localStorage on mount
     useEffect(() => {
@@ -447,8 +458,8 @@ export default function CaltrainDisplay() {
                 {/* NEXT TRAIN ALERT */}
                 {nextTrain && (
                     <div className="space-y-2">
-                        <div className="text-green-400 text-xs font-bold tracking-widest">
-                            ╔═══ INCOMING TRAIN ALERT ═══╗
+                        <div className="text-green-400 text-xs font-bold tracking-widest flex items-center">
+                            ╔═══ INCOMING TRAIN ALERT <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                         </div>
                         <div className="border-2 border-green-500 p-3 bg-green-950/20" style={{boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'}}>
                             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
@@ -496,8 +507,8 @@ export default function CaltrainDisplay() {
                     <div className="space-y-3">
                         {journeyDirection ? (
                             <>
-                                <div className="text-green-400 text-xs font-bold tracking-widest">
-                                    ╔═══ {journeyDirection === "NB" ? "NORTHBOUND" : "SOUTHBOUND"} QUEUE ═══╗
+                                <div className="text-green-400 text-xs font-bold tracking-widest flex items-center">
+                                    ╔═══ {journeyDirection === "NB" ? "NORTHBOUND" : "SOUTHBOUND"} QUEUE <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                                 </div>
                                 <TerminalPredictionTable
                                     predictions={journeyDirection === "NB" ? displayNBPredictions : displaySBPredictions}
@@ -509,8 +520,8 @@ export default function CaltrainDisplay() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-3">
-                                    <div className="text-green-400 text-xs font-bold tracking-widest">
-                                        ╔═══ NORTHBOUND QUEUE ═══╗
+                                    <div className="text-green-400 text-xs font-bold tracking-widest flex items-center">
+                                        ╔═══ NORTHBOUND QUEUE <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                                     </div>
                                     <TerminalPredictionTable
                                         predictions={displayNBPredictions}
@@ -520,8 +531,8 @@ export default function CaltrainDisplay() {
                                     />
                                 </div>
                                 <div className="space-y-3">
-                                    <div className="text-pink-400 text-xs font-bold tracking-widest">
-                                        ╔═══ SOUTHBOUND QUEUE ═══╗
+                                    <div className="text-pink-400 text-xs font-bold tracking-widest flex items-center">
+                                        ╔═══ SOUTHBOUND QUEUE <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                                     </div>
                                     <TerminalPredictionTable
                                         predictions={displaySBPredictions}
@@ -538,8 +549,8 @@ export default function CaltrainDisplay() {
                 {/* Train Approach View - Terminal Wrapped */}
                 {selectedTrain && (
                     <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
-                        <div className="text-cyan-400 text-xs font-bold tracking-widest">
-                            ╔═══ APPROACH VISUALIZATION ═══╗
+                        <div className="text-cyan-400 text-xs font-bold tracking-widest flex items-center">
+                            ╔═══ APPROACH VISUALIZATION <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                         </div>
                         <div className="border border-cyan-500/50 p-4 bg-black">
                             <TrainApproachViewSelector
@@ -561,8 +572,8 @@ export default function CaltrainDisplay() {
                 {/* Train Summary - Terminal Wrapped */}
                 {selectedTrain && (
                     <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
-                        <div className="text-pink-400 text-xs font-bold tracking-widest">
-                            ╔═══ JOURNEY DETAILS ═══╗
+                        <div className="text-pink-400 text-xs font-bold tracking-widest flex items-center">
+                            ╔═══ JOURNEY DETAILS <SectionSpinner isLoading={showLoadingSpinners} /> ═══╗
                         </div>
                         <div className="border border-pink-500/50 p-4 bg-black">
                             <TrainSummary
@@ -601,6 +612,20 @@ export default function CaltrainDisplay() {
         </div>
     );
 }
+
+/**
+ * Section loading spinner component
+ * Shows a spinning indicator next to section titles with a brief artificial delay
+ * to assure users that async operations are happening
+ */
+const SectionSpinner = ({ isLoading }: { isLoading: boolean }) => {
+    if (!isLoading) return null;
+    return (
+        <div className="inline-block animate-spin ml-2">
+            <span className="text-green-500">◈</span>
+        </div>
+    );
+};
 
 interface TerminalPredictionTableProps {
     predictions: TrainPrediction[];
