@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { Station, TrainPrediction } from "@/lib/types";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface TerminalTimelineViewProps {
     train: TrainPrediction;
@@ -28,6 +29,7 @@ export default function TerminalTimelineView({
     loading = false,
     stationETAMap,
 }: TerminalTimelineViewProps) {
+    const { theme } = useTheme();
     const containerRef = useRef<HTMLDivElement>(null);
     const [expandedBefore, setExpandedBefore] = useState(false);
     const [expandedAfter, setExpandedAfter] = useState(false);
@@ -160,14 +162,14 @@ export default function TerminalTimelineView({
 
     // Get station time info - use Departure from predictions for origin/destination, 
     // use scheduled time from GTFS static for intermediate stations
-    const getStationTimeInfo = (stationName: string): { 
-        departureTime?: string; 
-        scheduledTime?: string; 
+    const getStationTimeInfo = (stationName: string): {
+        departureTime?: string;
+        scheduledTime?: string;
         etaMinutes: number;
     } => {
         const isOrigin = stationName === origin;
         const isDestination = stationName === passedDestination;
-        
+
         // For origin/destination, get from predictions
         if (isOrigin) {
             const originPred = originPredictions.find(p => p.TrainNumber === train.TrainNumber);
@@ -179,7 +181,7 @@ export default function TerminalTimelineView({
                 };
             }
         }
-        
+
         if (isDestination && passedDestination) {
             const destPred = destinationPredictions.find(p => p.TrainNumber === train.TrainNumber);
             if (destPred) {
@@ -190,7 +192,7 @@ export default function TerminalTimelineView({
                 };
             }
         }
-        
+
         // For intermediate stations, use scheduled time from GTFS static (via stationETAMap)
         // The arrivalTime in stationETAMap is calculated from static schedule
         if (stationETAMap && stationETAMap[stationName]) {
@@ -201,22 +203,22 @@ export default function TerminalTimelineView({
                 etaMinutes: eta.etaMinutes
             };
         }
-        
+
         if (loading) {
             return { etaMinutes: -1 };
         }
         return { etaMinutes: 0 };
     };
-    
+
     // Check if a station has passed based on departure time
     const isStationPassed = (stationName: string): boolean => {
         const timeInfo = getStationTimeInfo(stationName);
         if (!timeInfo.departureTime && !timeInfo.scheduledTime) return false;
-        
+
         const currentTime = passedCurrentTime || new Date();
         const timeToCheck = timeInfo.departureTime || timeInfo.scheduledTime;
         if (!timeToCheck) return false;
-        
+
         try {
             // Parse time like "08:10 PM"
             const [timePart, period] = timeToCheck.split(" ");
@@ -224,10 +226,10 @@ export default function TerminalTimelineView({
             let hour24 = hours;
             if (period === "PM" && hours !== 12) hour24 += 12;
             if (period === "AM" && hours === 12) hour24 = 0;
-            
+
             const stationTime = new Date(currentTime);
             stationTime.setHours(hour24, minutes, 0, 0);
-            
+
             // If station time is in the past, it's passed
             return stationTime < currentTime;
         } catch (e) {
@@ -244,14 +246,14 @@ export default function TerminalTimelineView({
     };
 
     return (
-        <div className="w-full bg-black text-cyan-300 font-mono text-xs space-y-1 p-4 rounded-lg border border-cyan-500/30 max-h-[400px] overflow-y-auto" ref={containerRef}>
+        <div className={`w-full ${theme.colors.bg.primary} ${theme.colors.text.primary} ${theme.typography.fontFamily} text-xs space-y-1 p-4 rounded-lg border ${theme.colors.ui.border} max-h-[400px] overflow-y-auto`} ref={containerRef}>
             {/* Header */}
-            <div className="text-cyan-400 font-bold tracking-widest border-b border-cyan-500/30 pb-2 sticky top-0 bg-black">
+            <div className={`${theme.colors.text.secondary} font-bold tracking-widest border-b ${theme.colors.ui.divider} pb-2 sticky top-0 ${theme.colors.bg.primary}`}>
                 ╔═══ TIMELINE ═══╗
             </div>
 
             {/* Train Status Line */}
-            <div className="text-green-400 py-1 border-b border-green-500/20">
+            <div className={`${theme.colors.status.onTime} py-1 border-b ${theme.colors.ui.divider}`}>
                 Train #{train.TrainNumber} {train.Direction === "SB" ? "↓ SOUTH" : "↑ NORTH"} | ETA: {etaToOriginMinutes}m
             </div>
 
@@ -259,7 +261,7 @@ export default function TerminalTimelineView({
             {hiddenBefore.length > 0 && !expandedBefore && (
                 <button
                     onClick={() => setExpandedBefore(true)}
-                    className="w-full text-cyan-500 hover:text-cyan-300 text-[11px] py-1 border border-cyan-500/30 bg-cyan-950/20 hover:bg-cyan-950/40 transition-colors"
+                    className={`w-full ${theme.colors.text.accent} hover:${theme.colors.text.primary} text-[11px] py-1 border ${theme.colors.ui.border} ${theme.colors.ui.hover} transition-colors`}
                 >
                     ▲ SHOW {hiddenBefore.length} EARLIER STATIONS
                 </button>
@@ -286,53 +288,51 @@ export default function TerminalTimelineView({
                     } else {
                         relativeTimeStr = "--";
                     }
-                    
+
                     // Get display time - show departure time, strike out scheduled if different
                     const displayTime = timeInfo.departureTime || timeInfo.scheduledTime || "--:--";
-                    const showStruckScheduled = timeInfo.scheduledTime && 
-                                                timeInfo.departureTime && 
-                                                timeInfo.scheduledTime !== timeInfo.departureTime;
+                    const showStruckScheduled = timeInfo.scheduledTime &&
+                        timeInfo.departureTime &&
+                        timeInfo.scheduledTime !== timeInfo.departureTime;
 
                     const statusIcon = isActuallyPassed
                         ? isOrigin
                             ? "◀"
                             : "▲"
                         : isOrigin
-                        ? "●"
-                        : isDestination
-                        ? "◆"
-                        : "○";
+                            ? "●"
+                            : isDestination
+                                ? "◆"
+                                : "○";
 
                     const colorClass = isActuallyPassed
-                        ? "text-green-600"
+                        ? theme.colors.status.onTime
                         : isOrigin
-                        ? "text-yellow-400"
-                        : "text-cyan-400";
+                            ? theme.colors.text.accent
+                            : theme.colors.text.secondary;
 
                     return (
-                        <div key={station.stopname} className={`flex items-center justify-between py-0.5 px-1 border-l-2 ${
-                            isOrigin ? "border-l-yellow-400 bg-yellow-950/20" :
-                            isDestination ? "border-l-pink-400 bg-pink-950/20" :
-                            isActuallyPassed ? "border-l-green-500 bg-green-950/10" :
-                            "border-l-cyan-500/30"
-                        }`}>
+                        <div key={station.stopname} className={`flex items-center justify-between py-0.5 px-1 border-l-2 ${isOrigin ? `border-l-${theme.colors.text.accent.split('-')[1]}-400 ${theme.colors.ui.active}` :
+                            isDestination ? `border-l-${theme.colors.status.delayed.split('-')[1]}-400 ${theme.colors.ui.active}` :
+                                isActuallyPassed ? `border-l-${theme.colors.status.onTime.split('-')[1]}-500 ${theme.colors.ui.hover}` :
+                                    `border-l-${theme.colors.text.secondary.split('-')[1]}-500/30`
+                            }`}>
                             <div className="flex items-center gap-1 flex-1 min-w-0">
                                 <span className={colorClass}>{statusIcon}</span>
                                 <span className="truncate flex-1">{station.stopname}</span>
                             </div>
                             <div className="flex flex-col items-end gap-0.5 ml-2">
-                                <span className={`text-[10px] ${
-                                    isActuallyPassed ? "text-green-500" : "text-pink-400"
-                                }`}>
+                                <span className={`text-[10px] ${isActuallyPassed ? theme.colors.status.onTime : theme.colors.status.delayed
+                                    }`}>
                                     {relativeTimeStr}
                                 </span>
                                 <div className="flex items-center gap-1">
                                     {showStruckScheduled && (
-                                        <span className="line-through text-gray-500 text-[9px]">
+                                        <span className={`line-through ${theme.colors.text.muted} text-[9px]`}>
                                             {timeInfo.scheduledTime}
                                         </span>
                                     )}
-                                    <span className="text-[9px] text-cyan-600">
+                                    <span className={`text-[9px] ${theme.colors.text.muted}`}>
                                         {displayTime}
                                     </span>
                                 </div>
@@ -346,18 +346,18 @@ export default function TerminalTimelineView({
             {hiddenAfter.length > 0 && !expandedAfter && (
                 <button
                     onClick={() => setExpandedAfter(true)}
-                    className="w-full text-cyan-500 hover:text-cyan-300 text-[11px] py-1 border border-cyan-500/30 bg-cyan-950/20 hover:bg-cyan-950/40 transition-colors"
+                    className={`w-full ${theme.colors.text.accent} hover:${theme.colors.text.primary} text-[11px] py-1 border ${theme.colors.ui.border} ${theme.colors.ui.hover} transition-colors`}
                 >
                     ▼ SHOW {hiddenAfter.length} LATER STATIONS
                 </button>
             )}
 
             {/* Overall Progress */}
-            <div className="border-t border-cyan-500/30 pt-1 mt-2">
-                <div className="text-cyan-500 text-[10px] mb-1">
+            <div className={`border-t ${theme.colors.ui.divider} pt-1 mt-2`}>
+                <div className={`${theme.colors.text.accent} text-[10px] mb-1`}>
                     OVERALL_PROGRESS {Math.round(trainProgress * 100)}%
                 </div>
-                <div className="text-cyan-400 text-[11px]">
+                <div className={`${theme.colors.text.secondary} text-[11px]`}>
                     {getProgressBar(trainProgress * 100)}
                 </div>
             </div>

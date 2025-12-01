@@ -1,4 +1,4 @@
-export type ThemeName = 'dark' | 'cyberpunk' | 'upside-down' | 'aurora';
+export type ThemeName = 'dark' | 'cyberpunk' | 'upside-down' | 'aurora' | 'holiday';
 
 export interface ThemeColors {
   // Background colors
@@ -54,6 +54,13 @@ export interface Theme {
     main: string;
     accent: string;
   };
+  typography: {
+    fontFamily: string;
+    logoText: string;
+  };
+  logo: {
+    icon: string;
+  };
 }
 
 export const themes: Record<ThemeName, Theme> = {
@@ -102,6 +109,13 @@ export const themes: Record<ThemeName, Theme> = {
       main: 'from-slate-900 to-slate-950',
       accent: 'from-blue-600 to-cyan-600',
     },
+    typography: {
+      fontFamily: 'font-mono',
+      logoText: 'RAILTIME',
+    },
+    logo: {
+      icon: '▸',
+    },
   },
   cyberpunk: {
     name: 'cyberpunk',
@@ -148,51 +162,65 @@ export const themes: Record<ThemeName, Theme> = {
       main: 'from-black via-cyan-900/20 to-black',
       accent: 'from-cyan-500 via-pink-500 to-purple-600',
     },
+    typography: {
+      fontFamily: 'font-mono',
+      logoText: 'RAILTIME',
+    },
+    logo: {
+      icon: '▸',
+    },
   },
   'upside-down': {
     name: 'upside-down',
     label: '🔴 Upside Down',
     colors: {
       bg: {
-        primary: 'bg-red-950/80',
-        secondary: 'bg-orange-900/60',
-        tertiary: 'bg-red-900/40',
-        card: 'bg-red-950/70',
+        primary: 'bg-black',
+        secondary: 'bg-neutral-950',
+        tertiary: 'bg-neutral-900',
+        card: 'bg-neutral-950/80',
       },
       text: {
-        primary: 'text-orange-100',
-        secondary: 'text-orange-200',
-        accent: 'text-red-300',
-        muted: 'text-orange-700',
+        primary: 'text-red-500',
+        secondary: 'text-red-400',
+        accent: 'text-red-600',
+        muted: 'text-red-900',
       },
       ui: {
-        border: 'border-red-600/50',
-        divider: 'border-red-800/40',
-        hover: 'hover:bg-red-900/40',
-        active: 'bg-red-900/60',
+        border: 'border-red-600/60',
+        divider: 'border-red-900/40',
+        hover: 'hover:bg-red-950/40',
+        active: 'bg-red-950/60',
       },
       status: {
-        onTime: 'text-orange-400',
-        delayed: 'text-red-300',
-        early: 'text-yellow-300',
+        onTime: 'text-red-500',
+        delayed: 'text-orange-500',
+        early: 'text-red-400',
       },
       progress: {
-        passed: 'rgb(234, 88, 12)',
-        current: 'rgb(254, 243, 199)',
-        upcoming: 'rgb(120, 53, 15)',
-        origin: '#fbbf24',
+        passed: 'rgb(153, 27, 27)',
+        current: 'rgb(220, 38, 38)',
+        upcoming: 'rgb(38, 38, 38)',
+        origin: '#dc2626',
       },
       track: {
-        background: 'bg-red-950/50',
-        fill: 'bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_0_30px_rgba(234,88,12,0.5)]',
-        accent: 'rgba(234,88,12,0.6)',
+        background: 'bg-neutral-900',
+        fill: 'bg-gradient-to-r from-red-600 to-red-800 shadow-[0_0_30px_rgba(220,38,38,0.6)]',
+        accent: 'rgba(220,38,38,0.7)',
       },
-      shadow: 'shadow-[0_0_50px_rgba(234,88,12,0.1)]',
-      glow: 'drop-shadow-[0_0_8px_rgba(255,140,0,0.6)]',
+      shadow: 'shadow-[0_0_50px_rgba(220,38,38,0.3)]',
+      glow: 'drop-shadow-[0_0_10px_rgba(220,38,38,0.9)]',
     },
     gradients: {
-      main: 'from-red-950/80 via-orange-900/40 to-red-950/60',
-      accent: 'from-red-600 via-orange-500 to-yellow-600',
+      main: 'from-black via-neutral-950 to-black',
+      accent: 'from-red-600 via-red-700 to-red-900',
+    },
+    typography: {
+      fontFamily: 'font-creepster',
+      logoText: 'STRANGER TRAINS',
+    },
+    logo: {
+      icon: 'ꓕ',
     },
   },
   aurora: {
@@ -239,6 +267,66 @@ export const themes: Record<ThemeName, Theme> = {
     gradients: {
       main: 'from-slate-950 via-teal-950/30 to-emerald-950/20',
       accent: 'from-emerald-500 via-cyan-500 to-teal-600',
+    },
+    typography: {
+      fontFamily: 'font-mono',
+      logoText: 'RAILTIME',
+    },
+    logo: {
+      icon: '▸',
+    },
+  },
+  holiday: {
+    name: 'holiday',
+    label: '🎄 Holiday',
+    colors: {
+      bg: {
+        primary: 'bg-green-950',
+        secondary: 'bg-green-900',
+        tertiary: 'bg-red-950/30',
+        card: 'bg-green-900/60',
+      },
+      text: {
+        primary: 'text-red-100',
+        secondary: 'text-green-100',
+        accent: 'text-yellow-400',
+        muted: 'text-green-700',
+      },
+      ui: {
+        border: 'border-red-500/40',
+        divider: 'border-green-800/40',
+        hover: 'hover:bg-red-900/30',
+        active: 'bg-red-900/40',
+      },
+      status: {
+        onTime: 'text-green-400',
+        delayed: 'text-red-400',
+        early: 'text-yellow-400',
+      },
+      progress: {
+        passed: 'rgb(22, 163, 74)',
+        current: 'rgb(250, 204, 21)',
+        upcoming: 'rgb(127, 29, 29)',
+        origin: '#ef4444',
+      },
+      track: {
+        background: 'bg-green-950/40',
+        fill: 'bg-gradient-to-r from-red-600 via-yellow-500 to-green-600 shadow-[0_0_40px_rgba(220,38,38,0.4)]',
+        accent: 'rgba(250,204,21,0.5)',
+      },
+      shadow: 'shadow-[0_0_40px_rgba(220,38,38,0.1)]',
+      glow: 'drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]',
+    },
+    gradients: {
+      main: 'from-green-950 via-red-950/20 to-green-950',
+      accent: 'from-red-600 via-yellow-500 to-green-600',
+    },
+    typography: {
+      fontFamily: 'font-mountains',
+      logoText: 'HOLIDAY EXPRESS',
+    },
+    logo: {
+      icon: '🎄',
     },
   },
 };

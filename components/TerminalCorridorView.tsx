@@ -1,6 +1,7 @@
 "use client";
 
 import { Station, TrainPrediction } from "@/lib/types";
+import { useTheme } from "@/lib/ThemeContext";
 
 interface TerminalCorridorViewProps {
     train: TrainPrediction;
@@ -24,6 +25,7 @@ export default function TerminalCorridorView({
     originPredictions: passedOriginPredictions = [],
     destinationPredictions: passedDestinationPredictions = [],
 }: TerminalCorridorViewProps) {
+    const { theme } = useTheme();
     const vehiclePosition = vehiclePositions.find(p => p.Vehicle?.Trip?.TripId === train.TrainNumber) || null;
 
     const sortedStations = [...stations].sort((a, b) => {
@@ -110,7 +112,7 @@ export default function TerminalCorridorView({
         const addSeparator = (hiddenCount?: number, isDotted?: boolean) => {
             dots.push({
                 type: 'separator',
-                color: 'text-cyan-600',
+                color: theme.colors.text.muted,
                 hiddenCount: hiddenCount,
                 isDotted: isDotted
             });
@@ -120,7 +122,7 @@ export default function TerminalCorridorView({
         // If origin is the next station, skip showing next station separately
 
         // Add train
-        dots.push({ type: 'train', color: 'text-green-400' });
+        dots.push({ type: 'train', color: theme.colors.status.onTime });
 
         // Add next station (if it exists and is not the origin)
         if (nearestUpcomingIdx !== -1 && nearestUpcomingIdx !== originIdx) {
@@ -133,15 +135,15 @@ export default function TerminalCorridorView({
             addSeparator(hiddenToNext > 0 ? hiddenToNext : undefined, true);
 
             const station = normalizedStations[nearestUpcomingIdx];
-            dots.push({ type: 'station', color: 'text-gray-500', label: station.stopname });
+            dots.push({ type: 'station', color: theme.colors.text.muted, label: station.stopname });
         }
 
         // Add origin (if it exists)
         if (originIdx !== -1) {
             // Calculate hidden stations between train/next and origin
             let hiddenToOrigin = 0;
-            const startIdx = nearestUpcomingIdx !== -1 && nearestUpcomingIdx !== originIdx 
-                ? nearestUpcomingIdx 
+            const startIdx = nearestUpcomingIdx !== -1 && nearestUpcomingIdx !== originIdx
+                ? nearestUpcomingIdx
                 : trainIdx;
             const minIdx = Math.min(startIdx, originIdx);
             const maxIdx = Math.max(startIdx, originIdx);
@@ -152,9 +154,9 @@ export default function TerminalCorridorView({
             addSeparator(hiddenToOrigin > 0 ? hiddenToOrigin : undefined, isDottedSeparator);
 
             const station = normalizedStations[originIdx];
-            dots.push({ 
-                type: 'station', 
-                color: 'text-blue-400', 
+            dots.push({
+                type: 'station',
+                color: theme.colors.status.early,
                 label: station.stopname,
                 departureTime: originPrediction?.Departure,
                 scheduledTime: originPrediction?.ScheduledTime
@@ -173,9 +175,9 @@ export default function TerminalCorridorView({
             const isDottedSeparator = destIdx === nearestUpcomingIdx;
             addSeparator(hiddenToDest > 0 ? hiddenToDest : undefined, isDottedSeparator);
             const station = normalizedStations[destIdx];
-            dots.push({ 
-                type: 'station', 
-                color: 'text-orange-400', 
+            dots.push({
+                type: 'station',
+                color: theme.colors.text.accent,
                 label: station.stopname,
                 departureTime: destinationPrediction?.Departure,
                 scheduledTime: destinationPrediction?.ScheduledTime
@@ -215,49 +217,48 @@ export default function TerminalCorridorView({
     const etaToOriginMinutes = getRealTimeETA(passedOriginPredictions || []);
 
     return (
-        <div className="w-full bg-black text-cyan-300 font-mono text-sm space-y-3 p-4 rounded-lg border border-cyan-500/30">
+        <div className={`w-full ${theme.colors.bg.primary} ${theme.colors.text.primary} ${theme.typography.fontFamily} text-sm space-y-3 p-4 rounded-lg border ${theme.colors.ui.border}`}>
             {/* Header */}
-            <div className="text-cyan-400 font-bold tracking-widest border-b border-cyan-500/30 pb-2">
+            <div className={`${theme.colors.text.secondary} font-bold tracking-widest border-b ${theme.colors.ui.divider} pb-2`}>
                 ╔═══ CORRIDOR VISUALIZATION ═══╗
             </div>
 
             {/* Train Status */}
             <div className="flex items-center justify-between text-xs">
-                <span className="text-green-400">
+                <span className={`${theme.colors.status.onTime}`}>
                     Train #{train.TrainNumber}
                 </span>
-                <span className={`${
-                    train.delayStatus === "delayed" ? "text-red-400" :
-                    train.delayStatus === "early" ? "text-blue-400" : "text-green-400"
-                }`}>
+                <span className={`${train.delayStatus === "delayed" ? theme.colors.status.delayed :
+                    train.delayStatus === "early" ? theme.colors.status.early : theme.colors.status.onTime
+                    }`}>
                     {train.delayStatus === "delayed" ? `+${train.delayMinutes}m LATE` :
-                     train.delayStatus === "early" ? `−${Math.abs(train.delayMinutes!)}m EARLY` :
-                     "ON TIME"}
+                        train.delayStatus === "early" ? `−${Math.abs(train.delayMinutes!)}m EARLY` :
+                            "ON TIME"}
                 </span>
             </div>
 
             {/* Direction Indicator */}
-            <div className="flex items-center justify-between text-[10px] text-cyan-600 tracking-widest">
+            <div className={`flex items-center justify-between text-[10px] ${theme.colors.text.muted} tracking-widest`}>
                 <span>{train.Direction === "SB" ? "← SOUTHBOUND" : "NORTHBOUND →"}</span>
-                <span className="text-cyan-500">{Math.round(trainProgress * 100)}% progress</span>
+                <span className={`${theme.colors.text.accent}`}>{Math.round(trainProgress * 100)}% progress</span>
             </div>
 
             {/* Horizontal corridor dots */}
-            <div className="bg-black border border-cyan-500/20 p-3">
-                <div className="text-cyan-400 text-lg font-mono flex items-start justify-center gap-2">
+            <div className={`${theme.colors.bg.card} border ${theme.colors.ui.divider} p-3`}>
+                <div className={`${theme.colors.text.primary} text-lg font-mono flex items-start justify-center gap-2`}>
                     {corridorDots.map((dot, idx) => (
                         <div key={idx} className={`flex flex-col items-center justify-start ${dot.type === 'separator' ? 'min-w-[20px]' : 'min-w-[60px]'}`}>
                             <span className={`${dot.color} leading-none`}>
                                 {dot.type === 'train'
                                     ? (train.Direction === "SB" ? "◀" : "▶")
                                     : dot.type === 'separator'
-                                    ? (dot.isDotted ? "···" : "---")
-                                    : "●"
+                                        ? (dot.isDotted ? "···" : "---")
+                                        : "●"
                                 }
                             </span>
                             <div className="flex flex-col items-center justify-start mt-1 min-h-[2rem]">
                                 {dot.type === 'separator' && dot.hiddenCount && (
-                                    <span className="text-cyan-600 text-[8px] whitespace-nowrap leading-none">+{dot.hiddenCount}</span>
+                                    <span className={`${theme.colors.text.muted} text-[8px] whitespace-nowrap leading-none`}>+{dot.hiddenCount}</span>
                                 )}
                                 {dot.type === 'station' && dot.label && (
                                     <>
@@ -267,7 +268,7 @@ export default function TerminalCorridorView({
                                         {(dot.departureTime || dot.scheduledTime) && (
                                             <div className="flex items-center gap-1 mt-0.5">
                                                 {dot.scheduledTime && dot.departureTime && dot.scheduledTime !== dot.departureTime && (
-                                                    <span className="line-through text-gray-500 text-[7px]">{dot.scheduledTime}</span>
+                                                    <span className={`line-through ${theme.colors.text.muted} text-[7px]`}>{dot.scheduledTime}</span>
                                                 )}
                                                 <span className={`${dot.color} text-[7px] leading-none`}>
                                                     {dot.departureTime || dot.scheduledTime}
@@ -277,7 +278,7 @@ export default function TerminalCorridorView({
                                     </>
                                 )}
                                 {dot.type === 'train' && (
-                                    <span className="text-[9px] text-cyan-500 leading-tight">Train</span>
+                                    <span className={`text-[9px] ${theme.colors.text.accent} leading-tight`}>Train</span>
                                 )}
                             </div>
                         </div>
@@ -286,14 +287,14 @@ export default function TerminalCorridorView({
             </div>
 
             {/* Status Info */}
-            <div className="border-t border-cyan-500/30 pt-2 text-xs space-y-1">
-                <div className="text-green-400">
+            <div className={`border-t ${theme.colors.ui.divider} pt-2 text-xs space-y-1`}>
+                <div className={`${theme.colors.status.onTime}`}>
                     {etaToOriginMinutes > 0
                         ? `ARRIVAL at ${origin} in ${etaToOriginMinutes}m`
                         : `DEPARTED from ${origin}`
                     }
                 </div>
-                <div className="text-cyan-500">
+                <div className={`${theme.colors.text.accent}`}>
                     Type: {train.TrainType} | {train.Direction === "SB" ? "↓ Moving South" : "↑ Moving North"}
                 </div>
             </div>

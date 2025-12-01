@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Creepster, Mountains_of_Christmas } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/ThemeContext";
 
@@ -10,6 +10,18 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const creepster = Creepster({
+  weight: "400",
+  variable: "--font-creepster",
+  subsets: ["latin"],
+});
+
+const mountainsOfChristmas = Mountains_of_Christmas({
+  weight: ["400", "700"],
+  variable: "--font-mountains",
   subsets: ["latin"],
 });
 
@@ -47,7 +59,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${creepster.variable} ${mountainsOfChristmas.variable} antialiased`}
       >
         <ThemeProvider>
           {children}

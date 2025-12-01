@@ -28,6 +28,7 @@ import dynamic from "next/dynamic";
 
 import TrainApproachViewSelector from "./TrainApproachViewSelector";
 import TrainSummary from "./TrainSummary";
+import HolidayLights from "./HolidayLights";
 import TerminalThemeSwitcher from "./TerminalThemeSwitcher";
 import { fetchVehiclePositions } from "@/lib/caltrain";
 import { useTheme } from "@/lib/ThemeContext";
@@ -365,63 +366,64 @@ export default function CaltrainDisplay() {
     const [stationSelectorOpen, setStationSelectorOpen] = useState(false);
 
     return (
-        <div className={`min-h-screen bg-black transition-colors duration-500`}>
-            <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-6 font-mono">
+        <div className={`min-h-screen ${theme.colors.bg.primary} ${theme.typography.fontFamily} transition-colors duration-500`}>
+            <HolidayLights />
+            <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-6">
                 {/* TERMINAL HEADER WITH NEON GLOW */}
                 <div className="space-y-4">
-                    <div className="border-l-4 border-cyan-400 pl-4 py-2 bg-cyan-950/20">
-                        <div className={`text-3xl font-bold text-cyan-300 animate-pulse`} style={{ textShadow: '0 0 10px rgba(34, 211, 238, 0.8)' }}>
-                            ▸ RAILTIME ▸
+                    <div className={`border-l-4 ${theme.colors.ui.border.replace('border', 'border-l')} pl-4 py-2 ${theme.colors.bg.card}`}>
+                        <div className={`text-3xl font-bold ${theme.colors.text.primary} animate-pulse`} style={{ textShadow: `0 0 10px ${theme.colors.glow.replace('drop-shadow-[0_0_10px_', '').replace(']', '')}` }}>
+                            {theme.logo.icon} {theme.typography.logoText} {theme.logo.icon}
                         </div>
-                        <div className="text-xs text-cyan-400 mt-1 tracking-widest">
+                        <div className={`text-xs ${theme.colors.text.secondary} mt-1 tracking-widest`}>
                             real-time caltrain monitoring system v1.0
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs px-2">
-                        <span className="text-green-400">[SYSTEM ACTIVE]</span>
-                        <span className="text-cyan-400">
+                    <div className={`flex items-center justify-between text-xs px-2`}>
+                        <span className={`${theme.colors.status.onTime}`}>[SYSTEM ACTIVE]</span>
+                        <span className={`${theme.colors.text.secondary}`}>
                             {lastUpdated && `LAST UPDATE: ${lastUpdated.toLocaleTimeString()}`}
                         </span>
                         <div className="flex gap-2 items-center">
                             {/* Updating spinner - spins during API calls, doesn't block layout */}
                             {isUpdating && (
                                 <div className="animate-spin inline-block">
-                                    <div className="text-green-500">⟳</div>
+                                    <div className={`${theme.colors.status.onTime}`}>⟳</div>
                                 </div>
                             )}
                             <TerminalThemeSwitcher />
                         </div>
                     </div>
 
-                    <div className="border border-cyan-500/50 border-dashed"></div>
+                    <div className={`border ${theme.colors.ui.divider} border-dashed`}></div>
                 </div>
 
                 {/* ROUTE CONFIG AND INCOMING TRAIN ALERT - Two Columns */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* ROUTE CONFIG PANEL */}
                     <div className="space-y-2">
-                        <div className="text-cyan-400 text-xs font-bold tracking-widest">
+                        <div className={`${theme.colors.text.primary} text-xs font-bold tracking-widest`}>
                             ╔═══ ROUTE CONFIGURATION ═══╗
                         </div>
-                        <div className="border-l-2 border-pink-500 pl-3 py-2 bg-pink-950/10">
+                        <div className={`border-l-2 ${theme.colors.ui.border.replace('border', 'border-l')} pl-3 py-2 ${theme.colors.bg.card}`}>
                             <div
-                                className="group flex items-center justify-between cursor-pointer hover:bg-pink-950/20 px-2 py-2 transition-all border border-transparent hover:border-pink-500/30"
+                                className={`group flex items-center justify-between cursor-pointer ${theme.colors.ui.hover} px-2 py-2 transition-all border border-transparent hover:${theme.colors.ui.border.replace('border-', 'border-')}`}
                                 onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
                             >
                                 <div className="flex flex-col">
-                                    <span className="text-pink-400 font-bold group-hover:text-pink-300 transition-colors flex items-center gap-2">
+                                    <span className={`${theme.colors.text.accent} font-bold group-hover:${theme.colors.text.primary} transition-colors flex items-center gap-2`}>
                                         <span className="text-xs">►</span>
                                         {origin}
-                                        <span className="text-pink-600">→</span>
+                                        <span className={`${theme.colors.text.muted}`}>→</span>
                                         {destination && destination !== "All" ? destination : "All Stations"}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-cyan-600 text-[10px] group-hover:text-cyan-400 transition-colors tracking-widest font-bold opacity-70 group-hover:opacity-100">
+                                    <span className={`${theme.colors.text.muted} text-[10px] group-hover:${theme.colors.text.secondary} transition-colors tracking-widest font-bold opacity-70 group-hover:opacity-100`}>
                                         [EDIT_ROUTE]
                                     </span>
-                                    <span className="text-green-400 text-xs">
+                                    <span className={`${theme.colors.status.onTime} text-xs`}>
                                         {stationSelectorOpen ? "▼" : "▶"}
                                     </span>
                                 </div>
@@ -429,15 +431,15 @@ export default function CaltrainDisplay() {
                         </div>
 
                         {stationSelectorOpen && (
-                            <div className="space-y-2 mt-2 p-3 bg-black border border-pink-500/40">
+                            <div className={`space-y-2 mt-2 p-3 ${theme.colors.bg.primary} border ${theme.colors.ui.border}`}>
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-1">
-                                        <label className="text-green-400 text-xs tracking-widest">ORIGIN_STATION</label>
+                                        <label className={`${theme.colors.status.onTime} text-xs tracking-widest`}>ORIGIN_STATION</label>
                                         <Select value={origin} onValueChange={setOrigin}>
-                                            <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                            <SelectTrigger className={`${theme.colors.bg.primary} border ${theme.colors.ui.border} ${theme.colors.text.primary} font-mono text-xs h-8`}>
                                                 <SelectValue placeholder=">" />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                            <SelectContent className={`${theme.colors.bg.primary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
                                                 {stations.map((s) => (
                                                     <SelectItem key={s.stopname} value={s.stopname}>
                                                         {s.stopname}
@@ -448,12 +450,12 @@ export default function CaltrainDisplay() {
                                     </div>
 
                                     <div className="space-y-1">
-                                        <label className="text-green-400 text-xs tracking-widest">DESTINATION</label>
+                                        <label className={`${theme.colors.status.onTime} text-xs tracking-widest`}>DESTINATION</label>
                                         <Select value={destination} onValueChange={setDestination}>
-                                            <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                            <SelectTrigger className={`${theme.colors.bg.primary} border ${theme.colors.ui.border} ${theme.colors.text.primary} font-mono text-xs h-8`}>
                                                 <SelectValue placeholder=">" />
                                             </SelectTrigger>
-                                            <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                            <SelectContent className={`${theme.colors.bg.primary} border ${theme.colors.ui.border} ${theme.colors.text.primary}`}>
                                                 <SelectItem value="All">[ all ]</SelectItem>
                                                 {stations
                                                     .filter((s) => s.stopname !== origin)
@@ -469,7 +471,7 @@ export default function CaltrainDisplay() {
 
                                 <Button
                                     onClick={loadAllData}
-                                    className="bg-black border border-green-500/50 text-green-400 hover:bg-green-950/30 h-7 text-xs font-mono w-full"
+                                    className={`${theme.colors.bg.primary} border ${theme.colors.status.onTime.replace('text-', 'border-')} ${theme.colors.status.onTime} hover:${theme.colors.ui.hover} h-7 text-xs font-mono w-full`}
                                 >
                                     {isUpdating ? "█ UPDATING..." : "▶ REFRESH"}
                                 </Button>
@@ -480,19 +482,19 @@ export default function CaltrainDisplay() {
                     {/* NEXT TRAIN ALERT */}
                     {nextTrain && (
                         <div className="space-y-2">
-                            <div className="text-green-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                            <div className={`${theme.colors.status.onTime} text-xs font-bold tracking-widest flex items-center justify-between`}>
                                 <span>╔═══ INCOMING TRAIN ═══╗</span>
                                 <SectionSpinner isLoading={showLoadingSpinners} />
                             </div>
-                            <div className="border-2 border-green-500 p-2 bg-green-950/20" style={{ boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }}>
+                            <div className={`border-2 ${theme.colors.status.onTime.replace('text-', 'border-')} p-2 ${theme.colors.bg.card}`} style={{ boxShadow: `0 0 20px ${theme.colors.glow.replace('drop-shadow-[0_0_10px_', '').replace(']', '')}` }}>
                                 <div className="flex items-center justify-between gap-4">
                                     <div className="flex items-center gap-2 min-w-0">
-                                        <span className="text-green-500 text-[10px] uppercase tracking-wider whitespace-nowrap">Train</span>
-                                        <span className="text-yellow-300 text-sm font-bold">#{nextTrain.TrainNumber}</span>
-                                        <span className="text-cyan-300 text-xs">({nextTrain.TrainType})</span>
+                                        <span className={`${theme.colors.status.onTime} text-[10px] uppercase tracking-wider whitespace-nowrap`}>Train</span>
+                                        <span className={`${theme.colors.text.accent} text-sm font-bold`}>#{nextTrain.TrainNumber}</span>
+                                        <span className={`${theme.colors.text.secondary} text-xs`}>({nextTrain.TrainType})</span>
                                         {nextTrain.delayStatus && (
-                                            <span className={`text-[10px] font-bold ${nextTrain.delayStatus === "on-time" ? "text-green-400" :
-                                                    nextTrain.delayStatus === "delayed" ? "text-red-400" : "text-cyan-400"
+                                            <span className={`text-[10px] font-bold ${nextTrain.delayStatus === "on-time" ? theme.colors.status.onTime :
+                                                nextTrain.delayStatus === "delayed" ? theme.colors.status.delayed : theme.colors.status.early
                                                 }`}>
                                                 {nextTrain.delayStatus === "on-time" ? "[OK]" :
                                                     nextTrain.delayStatus === "delayed" ? `[+${nextTrain.delayMinutes}m]` :
@@ -501,14 +503,14 @@ export default function CaltrainDisplay() {
                                         )}
                                     </div>
                                     <div className="flex items-center gap-2 flex-shrink-0">
-                                        <span className="text-green-500 text-[10px] uppercase tracking-wider whitespace-nowrap">Departure</span>
+                                        <span className={`${theme.colors.status.onTime} text-[10px] uppercase tracking-wider whitespace-nowrap`}>Departure</span>
                                         <div className="flex items-center gap-1">
                                             {nextTrain.ScheduledTime && nextTrain.ScheduledTime !== nextTrain.Departure && (
-                                                <span className="line-through text-gray-500 text-xs">{nextTrain.ScheduledTime}</span>
+                                                <span className={`line-through ${theme.colors.text.muted} text-xs`}>{nextTrain.ScheduledTime}</span>
                                             )}
-                                            <span className="text-yellow-300 text-sm">{nextTrain.Departure}</span>
+                                            <span className={`${theme.colors.text.accent} text-sm`}>{nextTrain.Departure}</span>
                                         </div>
-                                        <span className="text-pink-400 text-sm font-bold animate-pulse" style={{ textShadow: '0 0 10px rgba(244, 63, 94, 0.8)' }}>
+                                        <span className={`${theme.colors.status.delayed} text-sm font-bold animate-pulse`} style={{ textShadow: '0 0 10px rgba(244, 63, 94, 0.8)' }}>
                                             (in {nextTrain.ETA})
                                         </span>
                                     </div>
@@ -518,7 +520,7 @@ export default function CaltrainDisplay() {
                     )}
                 </div>
 
-                <div className="border border-cyan-500/30 border-dashed"></div>
+                <div className={`border ${theme.colors.ui.divider} border-dashed`}></div>
 
 
                 {/* PREDICTIONS PANEL - Train Predictions with Terminal Styling */}
@@ -526,7 +528,7 @@ export default function CaltrainDisplay() {
                     <div className="space-y-3">
                         {journeyDirection ? (
                             <>
-                                <div className="text-green-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                                <div className={`${theme.colors.status.onTime} text-xs font-bold tracking-widest flex items-center justify-between`}>
                                     <span>╔═══ {journeyDirection === "NB" ? "NORTHBOUND" : "SOUTHBOUND"} QUEUE ═══╗</span>
                                     <SectionSpinner isLoading={showLoadingSpinners} />
                                 </div>
@@ -540,7 +542,7 @@ export default function CaltrainDisplay() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-3">
-                                    <div className="text-green-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                                    <div className={`${theme.colors.status.onTime} text-xs font-bold tracking-widest flex items-center justify-between`}>
                                         <span>╔═══ NORTHBOUND QUEUE ═══╗</span>
                                         <SectionSpinner isLoading={showLoadingSpinners} />
                                     </div>
@@ -552,7 +554,7 @@ export default function CaltrainDisplay() {
                                     />
                                 </div>
                                 <div className="space-y-3">
-                                    <div className="text-pink-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                                    <div className={`${theme.colors.status.delayed} text-xs font-bold tracking-widest flex items-center justify-between`}>
                                         <span>╔═══ SOUTHBOUND QUEUE ═══╗</span>
                                         <SectionSpinner isLoading={showLoadingSpinners} />
                                     </div>
@@ -571,11 +573,11 @@ export default function CaltrainDisplay() {
                 {/* Train Approach View - Terminal Wrapped */}
                 {selectedTrain && (
                     <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
-                        <div className="text-cyan-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                        <div className={`${theme.colors.text.primary} text-xs font-bold tracking-widest flex items-center justify-between`}>
                             <span>╔═══ APPROACH VISUALIZATION ═══╗</span>
                             <SectionSpinner isLoading={showLoadingSpinners} />
                         </div>
-                        <div className="border border-cyan-500/50 p-4 bg-black">
+                        <div className={`border ${theme.colors.ui.border} p-4 ${theme.colors.bg.primary}`}>
                             <TrainApproachViewSelector
                                 train={selectedTrain}
                                 origin={origin}
@@ -595,11 +597,11 @@ export default function CaltrainDisplay() {
                 {/* Train Summary - Terminal Wrapped */}
                 {selectedTrain && (
                     <div className="animate-in slide-in-from-top-10 fade-in duration-500 space-y-3">
-                        <div className="text-pink-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                        <div className={`${theme.colors.text.accent} text-xs font-bold tracking-widest flex items-center justify-between`}>
                             <span>╔═══ JOURNEY DETAILS ═══╗</span>
                             <SectionSpinner isLoading={showLoadingSpinners} />
                         </div>
-                        <div className="border border-pink-500/50 p-4 bg-black">
+                        <div className={`border ${theme.colors.ui.border} p-4 ${theme.colors.bg.primary}`}>
                             <TrainSummary
                                 train={selectedTrain}
                                 origin={origin}
@@ -620,16 +622,16 @@ export default function CaltrainDisplay() {
                 )}
 
                 {/* TERMINAL FOOTER */}
-                <div className="border-t border-cyan-500/30 pt-4 text-center space-y-1">
+                <div className={`border-t ${theme.colors.ui.divider} pt-4 text-center space-y-1`}>
                     <a
                         href="https://github.com/theGreatHeisenberg/railtime"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-cyan-400 text-xs hover:text-pink-400 transition-colors font-mono tracking-widest"
+                        className={`${theme.colors.text.secondary} text-xs hover:${theme.colors.text.accent} transition-colors font-mono tracking-widest`}
                     >
                         {`> github.com/theGreatHeisenberg/railtime`}
                     </a>
-                    <p className="text-green-600 text-xs font-mono">
+                    <p className={`${theme.colors.status.onTime} text-xs font-mono`}>
                         [OPEN_SOURCE] [REAL-TIME] [MONITORING]
                     </p>
                 </div>
@@ -645,8 +647,9 @@ export default function CaltrainDisplay() {
  */
 const SectionSpinner = ({ isLoading }: { isLoading: boolean }) => {
     if (!isLoading) return null;
+    const { theme } = useTheme();
     return (
-        <div className="animate-spin text-green-500">
+        <div className={`animate-spin ${theme.colors.status.onTime}`}>
             ◈
         </div>
     );
@@ -665,9 +668,11 @@ const TerminalPredictionTable = memo(function TerminalPredictionTable({
     selectedTrainId,
     recentlyPassedTrainId,
 }: TerminalPredictionTableProps) {
+    const { theme } = useTheme();
+
     if (predictions.length === 0) {
         return (
-            <div className="text-green-600 text-xs font-mono p-2">
+            <div className={`${theme.colors.status.onTime} text-xs font-mono p-2`}>
                 [NO TRAINS IN QUEUE]
             </div>
         );
@@ -682,42 +687,42 @@ const TerminalPredictionTable = memo(function TerminalPredictionTable({
                         key={`${p.TrainNumber}-${p.Direction}`}
                         onClick={() => onSelectTrain(p)}
                         className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${selectedTrainId === p.TrainNumber
-                                ? "border-l-cyan-400 bg-cyan-950/40 text-cyan-300"
-                                : isPassed
-                                    ? "border-l-green-600 bg-green-950/30 text-green-400 opacity-80"
-                                    : "border-l-transparent hover:bg-cyan-950/20 text-cyan-400"
+                            ? `border-l-${theme.colors.text.primary.split('-')[1]}-400 ${theme.colors.ui.active} ${theme.colors.text.primary}`
+                            : isPassed
+                                ? `border-l-green-600 bg-green-950/30 ${theme.colors.status.onTime} opacity-80`
+                                : `border-l-transparent ${theme.colors.ui.hover} ${theme.colors.text.secondary}`
                             }`}
                     >
                         <div className="flex items-center gap-3 min-w-0 flex-1">
                             {/* Radio button indicator */}
                             <span className={`flex-shrink-0 w-4 text-center ${selectedTrainId === p.TrainNumber
-                                    ? "text-cyan-400"
-                                    : "text-cyan-600 opacity-50"
+                                ? theme.colors.text.primary
+                                : `${theme.colors.text.muted} opacity-50`
                                 }`}>
                                 {selectedTrainId === p.TrainNumber ? "●" : "○"}
                             </span>
-                            <span className="text-yellow-300 font-bold w-16">#{p.TrainNumber}</span>
-                            <span className={`w-10 ${isPassed ? "text-green-600" : "text-pink-400"}`}>
+                            <span className={`${theme.colors.text.accent} font-bold w-16`}>#{p.TrainNumber}</span>
+                            <span className={`w-10 ${isPassed ? theme.colors.status.onTime : theme.colors.text.accent}`}>
                                 {isPassed ? "PAST" : p.TrainType.substring(0, 3).toUpperCase()}
                             </span>
-                            <span className={`w-16 ${isPassed ? "text-green-600" : "text-cyan-300"}`}>
+                            <span className={`w-16 ${isPassed ? theme.colors.status.onTime : theme.colors.text.primary}`}>
                                 <div className="flex items-center gap-1">
                                     {p.ScheduledTime && p.ScheduledTime !== p.Departure && (
-                                        <span className="line-through text-gray-500 text-[10px]">{p.ScheduledTime}</span>
+                                        <span className={`line-through ${theme.colors.text.muted} text-[10px]`}>{p.ScheduledTime}</span>
                                     )}
                                     <span>{p.Departure}</span>
                                 </div>
                             </span>
                         </div>
                         <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-                            <span className={`font-bold w-12 text-right ${isPassed ? "text-green-500" :
-                                    p.delayStatus === "delayed" ? "text-red-400" :
-                                        p.delayStatus === "early" ? "text-blue-400" : "text-green-400"
+                            <span className={`font-bold w-12 text-right ${isPassed ? theme.colors.status.onTime :
+                                p.delayStatus === "delayed" ? theme.colors.status.delayed :
+                                    p.delayStatus === "early" ? theme.colors.status.early : theme.colors.status.onTime
                                 }`}>
                                 {p.ETA}
                             </span>
                             {p.delayStatus && (
-                                <span className="text-green-600 text-[10px] w-8 text-right">
+                                <span className={`${theme.colors.status.onTime} text-[10px] w-8 text-right`}>
                                     {p.delayStatus === "on-time" ? "[OK]" :
                                         p.delayStatus === "delayed" ? `[+${p.delayMinutes}]` :
                                             `[−${Math.abs(p.delayMinutes!)}]`}
