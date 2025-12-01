@@ -34,10 +34,10 @@ export default function TrainSummary({
 
   const delayColor =
     train.delayStatus === "delayed"
-      ? "text-red-400"
+      ? theme.colors.status.delayed
       : train.delayStatus === "early"
-        ? "text-blue-400"
-        : "text-green-400";
+        ? theme.colors.status.early
+        : theme.colors.status.onTime;
 
   const delayLabel =
     train.delayStatus === "delayed"
@@ -51,13 +51,13 @@ export default function TrainSummary({
   // Helper to render time with scheduled time struck through if different
   const renderTime = (departureTime: string | undefined, scheduledTime: string | undefined) => {
     if (!departureTime) return null;
-    
+
     const hasScheduled = scheduledTime && scheduledTime !== departureTime;
-    
+
     return (
       <div className="flex items-center gap-1">
         {hasScheduled && (
-          <span className="line-through text-gray-500 text-xs">{scheduledTime}</span>
+          <span className={`line-through ${theme.colors.text.muted} text-xs`}>{scheduledTime}</span>
         )}
         <span>{departureTime}</span>
       </div>

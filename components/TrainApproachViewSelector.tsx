@@ -5,6 +5,8 @@ import { TrainPrediction, Station } from "@/lib/types";
 import TerminalCorridorView from "./TerminalCorridorView";
 import TerminalTimelineView from "./TerminalTimelineView";
 
+import { useTheme } from "@/lib/ThemeContext";
+
 interface TrainApproachViewSelectorProps {
     train: TrainPrediction;
     origin: string;
@@ -33,29 +35,28 @@ export default function TrainApproachViewSelector({
     stationETAMap,
 }: TrainApproachViewSelectorProps) {
     const [viewType, setViewType] = useState<ViewType>('progress');
+    const { theme } = useTheme();
 
     return (
         <div className="relative">
             {/* View Selector Buttons - Terminal Style */}
-            <div className="absolute top-4 right-4 z-50 flex gap-2 bg-black border-2 border-cyan-400 p-2" style={{boxShadow: '0 0 20px rgba(6, 182, 212, 0.2)'}}>
+            <div className={`absolute top-4 right-4 z-50 flex gap-2 ${theme.colors.bg.primary} border-2 ${theme.colors.ui.border} p-2`} style={{ boxShadow: `0 0 20px ${theme.colors.glow.replace('drop-shadow-[0_0_10px_', '').replace(']', '')}` }}>
                 <button
                     onClick={() => setViewType('horizontal')}
-                    className={`px-3 py-1 font-mono text-xs tracking-widest transition-colors border ${
-                        viewType === 'horizontal'
-                            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-300'
-                            : 'border-green-500/50 bg-green-950/20 text-green-400 hover:bg-green-950/40'
-                    }`}
+                    className={`px-3 py-1 ${theme.typography.fontFamily} text-xs tracking-widest transition-colors border ${viewType === 'horizontal'
+                        ? `${theme.colors.ui.border} ${theme.colors.ui.active} ${theme.colors.text.primary}`
+                        : `${theme.colors.status.onTime.replace('text-', 'border-')} ${theme.colors.status.onTime.replace('text-', 'bg-').replace('400', '950')}/20 ${theme.colors.status.onTime} hover:${theme.colors.status.onTime.replace('text-', 'bg-').replace('400', '950')}/40`
+                        }`}
                     title="Corridor - Horizontal track view"
                 >
                     [CORRIDOR]
                 </button>
                 <button
                     onClick={() => setViewType('progress')}
-                    className={`px-3 py-1 font-mono text-xs tracking-widest transition-colors border ${
-                        viewType === 'progress'
-                            ? 'border-cyan-400 bg-cyan-950/60 text-cyan-300'
-                            : 'border-green-500/50 bg-green-950/20 text-green-400 hover:bg-green-950/40'
-                    }`}
+                    className={`px-3 py-1 ${theme.typography.fontFamily} text-xs tracking-widest transition-colors border ${viewType === 'progress'
+                        ? `${theme.colors.ui.border} ${theme.colors.ui.active} ${theme.colors.text.primary}`
+                        : `${theme.colors.status.onTime.replace('text-', 'border-')} ${theme.colors.status.onTime.replace('text-', 'bg-').replace('400', '950')}/20 ${theme.colors.status.onTime} hover:${theme.colors.status.onTime.replace('text-', 'bg-').replace('400', '950')}/40`
+                        }`}
                     title="Timeline - Vertical progress view"
                 >
                     [TIMELINE]
