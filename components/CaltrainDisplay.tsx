@@ -25,7 +25,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import dynamic from "next/dynamic";
-import TerminalSettingsModal from "./TerminalSettingsModal";
+
 import TrainApproachViewSelector from "./TrainApproachViewSelector";
 import TrainSummary from "./TrainSummary";
 import TerminalThemeSwitcher from "./TerminalThemeSwitcher";
@@ -50,14 +50,15 @@ export default function CaltrainDisplay() {
     const [selectedTrain, setSelectedTrain] = useState<TrainPrediction | null>(null);
     const [stationETAMap, setStationETAMap] = useState<Record<string, { etaMinutes: number; arrivalTime: string }>>({});
     const [lastPassedTrainId, setLastPassedTrainId] = useState<string | null>(null);
+    const [etaCalculationTime, setEtaCalculationTime] = useState<Date>(new Date());
 
     useEffect(() => {
         fetchStations().then((data) => {
             setStations(data);
 
-            // Load defaults from localStorage or use hardcoded defaults
-            const savedOrigin = localStorage.getItem("defaultOrigin");
-            const savedDest = localStorage.getItem("defaultDestination");
+            // Load defaults from localStorage
+            const savedOrigin = localStorage.getItem("selectedOrigin");
+            const savedDest = localStorage.getItem("selectedDestination");
 
             const findStation = (name: string) => data.find(s => s.stopname === name);
 
@@ -73,11 +74,20 @@ export default function CaltrainDisplay() {
             // Set Destination
             if (savedDest && (savedDest === "All" || findStation(savedDest))) {
                 setDestination(savedDest);
-            } else if (findStation("Palo Alto")) {
-                setDestination("Palo Alto");
+            } else {
+                setDestination("All");
             }
         });
     }, []);
+
+    // Persist selections
+    useEffect(() => {
+        if (origin) localStorage.setItem("selectedOrigin", origin);
+    }, [origin]);
+
+    useEffect(() => {
+        if (destination) localStorage.setItem("selectedDestination", destination);
+    }, [destination]);
 
     /**
      * Compare two prediction arrays for meaningful changes.
@@ -293,7 +303,7 @@ export default function CaltrainDisplay() {
                 TrainType: "",
                 delayStatus: "on-time",
                 delayMinutes: 0
-              } as TrainPrediction
+            } as TrainPrediction
             : null;
     }, [lastPassedTrainId]);
 
@@ -325,6 +335,7 @@ export default function CaltrainDisplay() {
     useEffect(() => {
         if (selectedTrain && origin && stations.length > 0 && predictions.length > 0) {
             const currentTime = new Date();
+            setEtaCalculationTime(currentTime);
             const etaMap = calculateStationETAs(
                 selectedTrain,
                 origin,
@@ -359,7 +370,7 @@ export default function CaltrainDisplay() {
                 {/* TERMINAL HEADER WITH NEON GLOW */}
                 <div className="space-y-4">
                     <div className="border-l-4 border-cyan-400 pl-4 py-2 bg-cyan-950/20">
-                        <div className={`text-3xl font-bold text-cyan-300 animate-pulse`} style={{textShadow: '0 0 10px rgba(34, 211, 238, 0.8)'}}>
+                        <div className={`text-3xl font-bold text-cyan-300 animate-pulse`} style={{ textShadow: '0 0 10px rgba(34, 211, 238, 0.8)' }}>
                             ▸ RAILTIME ▸
                         </div>
                         <div className="text-xs text-cyan-400 mt-1 tracking-widest">
@@ -380,125 +391,132 @@ export default function CaltrainDisplay() {
                                 </div>
                             )}
                             <TerminalThemeSwitcher />
-                            {stations.length > 0 && <TerminalSettingsModal stations={stations} />}
                         </div>
                     </div>
 
                     <div className="border border-cyan-500/50 border-dashed"></div>
                 </div>
 
-                {/* ROUTE CONFIG PANEL */}
-                <div className="space-y-2">
-                    <div className="text-cyan-400 text-xs font-bold tracking-widest">
-                        ╔═══ ROUTE CONFIGURATION ═══╗
-                    </div>
-                    <div className="border-l-2 border-pink-500 pl-3 py-2 bg-pink-950/10">
-                        <div
-                            className="flex items-center justify-between cursor-pointer hover:bg-pink-950/20 px-2 py-1 transition-colors"
-                            onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
-                        >
-                            <span className="text-pink-400 font-bold">
-                                ► {origin} {destination && destination !== "All" && `→ ${destination}`}
-                            </span>
-                            <span className="text-green-400 text-xs">
-                                [{stationSelectorOpen ? "▼" : "▶"}]
-                            </span>
+                {/* ROUTE CONFIG AND INCOMING TRAIN ALERT - Two Columns */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* ROUTE CONFIG PANEL */}
+                    <div className="space-y-2">
+                        <div className="text-cyan-400 text-xs font-bold tracking-widest">
+                            ╔═══ ROUTE CONFIGURATION ═══╗
                         </div>
-                    </div>
-
-                    {stationSelectorOpen && (
-                        <div className="space-y-2 mt-2 p-3 bg-black border border-pink-500/40">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-green-400 text-xs tracking-widest">ORIGIN_STATION</label>
-                                    <Select value={origin} onValueChange={setOrigin}>
-                                        <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
-                                            <SelectValue placeholder=">" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
-                                            {stations.map((s) => (
-                                                <SelectItem key={s.stopname} value={s.stopname}>
-                                                    {s.stopname}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                        <div className="border-l-2 border-pink-500 pl-3 py-2 bg-pink-950/10">
+                            <div
+                                className="group flex items-center justify-between cursor-pointer hover:bg-pink-950/20 px-2 py-2 transition-all border border-transparent hover:border-pink-500/30"
+                                onClick={() => setStationSelectorOpen(!stationSelectorOpen)}
+                            >
+                                <div className="flex flex-col">
+                                    <span className="text-pink-400 font-bold group-hover:text-pink-300 transition-colors flex items-center gap-2">
+                                        <span className="text-xs">►</span>
+                                        {origin}
+                                        <span className="text-pink-600">→</span>
+                                        {destination && destination !== "All" ? destination : "All Stations"}
+                                    </span>
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-cyan-600 text-[10px] group-hover:text-cyan-400 transition-colors tracking-widest font-bold opacity-70 group-hover:opacity-100">
+                                        [EDIT_ROUTE]
+                                    </span>
+                                    <span className="text-green-400 text-xs">
+                                        {stationSelectorOpen ? "▼" : "▶"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-green-400 text-xs tracking-widest">DESTINATION</label>
-                                    <Select value={destination} onValueChange={setDestination}>
-                                        <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
-                                            <SelectValue placeholder=">" />
-                                        </SelectTrigger>
-                                        <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
-                                            <SelectItem value="All">[ all ]</SelectItem>
-                                            {stations
-                                                .filter((s) => s.stopname !== origin)
-                                                .map((s) => (
+                        {stationSelectorOpen && (
+                            <div className="space-y-2 mt-2 p-3 bg-black border border-pink-500/40">
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-green-400 text-xs tracking-widest">ORIGIN_STATION</label>
+                                        <Select value={origin} onValueChange={setOrigin}>
+                                            <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                                <SelectValue placeholder=">" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                                {stations.map((s) => (
                                                     <SelectItem key={s.stopname} value={s.stopname}>
                                                         {s.stopname}
                                                     </SelectItem>
                                                 ))}
-                                        </SelectContent>
-                                    </Select>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-green-400 text-xs tracking-widest">DESTINATION</label>
+                                        <Select value={destination} onValueChange={setDestination}>
+                                            <SelectTrigger className="bg-black border border-cyan-500/50 text-cyan-300 font-mono text-xs h-8">
+                                                <SelectValue placeholder=">" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-black border border-cyan-500 text-cyan-300">
+                                                <SelectItem value="All">[ all ]</SelectItem>
+                                                {stations
+                                                    .filter((s) => s.stopname !== origin)
+                                                    .map((s) => (
+                                                        <SelectItem key={s.stopname} value={s.stopname}>
+                                                            {s.stopname}
+                                                        </SelectItem>
+                                                    ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    onClick={loadAllData}
+                                    className="bg-black border border-green-500/50 text-green-400 hover:bg-green-950/30 h-7 text-xs font-mono w-full"
+                                >
+                                    {isUpdating ? "█ UPDATING..." : "▶ REFRESH"}
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* NEXT TRAIN ALERT */}
+                    {nextTrain && (
+                        <div className="space-y-2">
+                            <div className="text-green-400 text-xs font-bold tracking-widest flex items-center justify-between">
+                                <span>╔═══ INCOMING TRAIN ═══╗</span>
+                                <SectionSpinner isLoading={showLoadingSpinners} />
+                            </div>
+                            <div className="border-2 border-green-500 p-2 bg-green-950/20" style={{ boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)' }}>
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-green-500 text-[10px] uppercase tracking-wider whitespace-nowrap">Train</span>
+                                        <span className="text-yellow-300 text-sm font-bold">#{nextTrain.TrainNumber}</span>
+                                        <span className="text-cyan-300 text-xs">({nextTrain.TrainType})</span>
+                                        {nextTrain.delayStatus && (
+                                            <span className={`text-[10px] font-bold ${nextTrain.delayStatus === "on-time" ? "text-green-400" :
+                                                    nextTrain.delayStatus === "delayed" ? "text-red-400" : "text-cyan-400"
+                                                }`}>
+                                                {nextTrain.delayStatus === "on-time" ? "[OK]" :
+                                                    nextTrain.delayStatus === "delayed" ? `[+${nextTrain.delayMinutes}m]` :
+                                                        `[−${Math.abs(nextTrain.delayMinutes!)}m]`}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        <span className="text-green-500 text-[10px] uppercase tracking-wider whitespace-nowrap">Departure</span>
+                                        <div className="flex items-center gap-1">
+                                            {nextTrain.ScheduledTime && nextTrain.ScheduledTime !== nextTrain.Departure && (
+                                                <span className="line-through text-gray-500 text-xs">{nextTrain.ScheduledTime}</span>
+                                            )}
+                                            <span className="text-yellow-300 text-sm">{nextTrain.Departure}</span>
+                                        </div>
+                                        <span className="text-pink-400 text-sm font-bold animate-pulse" style={{ textShadow: '0 0 10px rgba(244, 63, 94, 0.8)' }}>
+                                            (in {nextTrain.ETA})
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
-
-                            <Button
-                                onClick={loadAllData}
-                                className="bg-black border border-green-500/50 text-green-400 hover:bg-green-950/30 h-7 text-xs font-mono w-full"
-                            >
-                                {isUpdating ? "█ UPDATING..." : "▶ REFRESH"}
-                            </Button>
                         </div>
                     )}
                 </div>
-
-                {/* NEXT TRAIN ALERT */}
-                {nextTrain && (
-                    <div className="space-y-2">
-                        <div className="text-green-400 text-xs font-bold tracking-widest flex items-center justify-between">
-                            <span>╔═══ INCOMING TRAIN ALERT ═══╗</span>
-                            <SectionSpinner isLoading={showLoadingSpinners} />
-                        </div>
-                        <div className="border-2 border-green-500 p-3 bg-green-950/20" style={{boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)'}}>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <div>
-                                    <div className="text-green-500 text-xs uppercase tracking-wider">Train ID</div>
-                                    <div className="text-yellow-300 text-2xl font-bold">#{nextTrain.TrainNumber}</div>
-                                </div>
-                                <div>
-                                    <div className="text-green-500 text-xs uppercase tracking-wider">Type</div>
-                                    <div className="text-cyan-300 text-lg">{nextTrain.TrainType}</div>
-                                </div>
-                                <div>
-                                    <div className="text-green-500 text-xs uppercase tracking-wider">Departure</div>
-                                    <div className="text-yellow-300 text-lg">{nextTrain.Departure}</div>
-                                </div>
-                                <div>
-                                    <div className="text-green-500 text-xs uppercase tracking-wider">ETA</div>
-                                    <div className="text-pink-400 text-lg font-bold animate-pulse" style={{textShadow: '0 0 10px rgba(244, 63, 94, 0.8)'}}>
-                                        {nextTrain.ETA}
-                                    </div>
-                                </div>
-                                {nextTrain.delayStatus && (
-                                    <div>
-                                        <div className="text-green-500 text-xs uppercase tracking-wider">Status</div>
-                                        <div className={`text-sm font-bold ${
-                                            nextTrain.delayStatus === "on-time" ? "text-green-400" :
-                                            nextTrain.delayStatus === "delayed" ? "text-red-400" : "text-cyan-400"
-                                        }`}>
-                                            {nextTrain.delayStatus === "on-time" ? "OK" :
-                                             nextTrain.delayStatus === "delayed" ? `+${nextTrain.delayMinutes}m` :
-                                             `−${Math.abs(nextTrain.delayMinutes!)}m`}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <div className="border border-cyan-500/30 border-dashed"></div>
 
@@ -594,7 +612,8 @@ export default function CaltrainDisplay() {
                                 }
                                 trainReachedOrigin={false}
                                 stations={stations}
-                                currentTime={new Date()}
+                                originPredictions={predictions}
+                                destinationPredictions={destination !== "All" ? destinationPredictions : []}
                             />
                         </div>
                     </div>
@@ -659,43 +678,53 @@ const TerminalPredictionTable = memo(function TerminalPredictionTable({
             {predictions.slice(0, 10).map((p, idx) => {
                 const isPassed = recentlyPassedTrainId === p.TrainNumber;
                 return (
-                <div
-                    key={`${p.TrainNumber}-${p.Direction}`}
-                    onClick={() => onSelectTrain(p)}
-                    className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${
-                        selectedTrainId === p.TrainNumber
-                            ? "border-l-cyan-400 bg-cyan-950/40 text-cyan-300"
-                            : isPassed
-                            ? "border-l-green-600 bg-green-950/30 text-green-400 opacity-80"
-                            : "border-l-transparent hover:bg-cyan-950/20 text-cyan-400"
-                    }`}
-                >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <span className="text-yellow-300 font-bold w-16">#{p.TrainNumber}</span>
-                        <span className={`w-10 ${isPassed ? "text-green-600" : "text-pink-400"}`}>
-                            {isPassed ? "PAST" : p.TrainType.substring(0, 3).toUpperCase()}
-                        </span>
-                        <span className={`w-16 ${isPassed ? "text-green-600" : "text-cyan-300"}`}>
-                            {p.Departure}
-                        </span>
-                    </div>
-                    <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-                        <span className={`font-bold w-12 text-right ${
-                            isPassed ? "text-green-500" :
-                            p.delayStatus === "delayed" ? "text-red-400" :
-                            p.delayStatus === "early" ? "text-blue-400" : "text-green-400"
-                        }`}>
-                            {p.ETA}
-                        </span>
-                        {p.delayStatus && (
-                            <span className="text-green-600 text-[10px] w-8 text-right">
-                                {p.delayStatus === "on-time" ? "[OK]" :
-                                 p.delayStatus === "delayed" ? `[+${p.delayMinutes}]` :
-                                 `[−${Math.abs(p.delayMinutes!)}]`}
+                    <div
+                        key={`${p.TrainNumber}-${p.Direction}`}
+                        onClick={() => onSelectTrain(p)}
+                        className={`flex items-center justify-between py-1.5 px-2 cursor-pointer font-mono text-xs transition-colors border-l-2 ${selectedTrainId === p.TrainNumber
+                                ? "border-l-cyan-400 bg-cyan-950/40 text-cyan-300"
+                                : isPassed
+                                    ? "border-l-green-600 bg-green-950/30 text-green-400 opacity-80"
+                                    : "border-l-transparent hover:bg-cyan-950/20 text-cyan-400"
+                            }`}
+                    >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            {/* Radio button indicator */}
+                            <span className={`flex-shrink-0 w-4 text-center ${selectedTrainId === p.TrainNumber
+                                    ? "text-cyan-400"
+                                    : "text-cyan-600 opacity-50"
+                                }`}>
+                                {selectedTrainId === p.TrainNumber ? "●" : "○"}
                             </span>
-                        )}
+                            <span className="text-yellow-300 font-bold w-16">#{p.TrainNumber}</span>
+                            <span className={`w-10 ${isPassed ? "text-green-600" : "text-pink-400"}`}>
+                                {isPassed ? "PAST" : p.TrainType.substring(0, 3).toUpperCase()}
+                            </span>
+                            <span className={`w-16 ${isPassed ? "text-green-600" : "text-cyan-300"}`}>
+                                <div className="flex items-center gap-1">
+                                    {p.ScheduledTime && p.ScheduledTime !== p.Departure && (
+                                        <span className="line-through text-gray-500 text-[10px]">{p.ScheduledTime}</span>
+                                    )}
+                                    <span>{p.Departure}</span>
+                                </div>
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 ml-auto flex-shrink-0">
+                            <span className={`font-bold w-12 text-right ${isPassed ? "text-green-500" :
+                                    p.delayStatus === "delayed" ? "text-red-400" :
+                                        p.delayStatus === "early" ? "text-blue-400" : "text-green-400"
+                                }`}>
+                                {p.ETA}
+                            </span>
+                            {p.delayStatus && (
+                                <span className="text-green-600 text-[10px] w-8 text-right">
+                                    {p.delayStatus === "on-time" ? "[OK]" :
+                                        p.delayStatus === "delayed" ? `[+${p.delayMinutes}]` :
+                                            `[−${Math.abs(p.delayMinutes!)}]`}
+                                </span>
+                            )}
+                        </div>
                     </div>
-                </div>
                 );
             })}
         </div>

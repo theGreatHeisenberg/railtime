@@ -146,25 +146,93 @@ export default function TerminalTimelineView({
     const hiddenAfter = getHiddenAfter();
 
     const getIsPassed = (stationPercent: number): boolean => {
+        const stationProgress = stationPercent / 100;
         if (train.Direction === "SB") {
-            return (stationPercent / 100) <= trainProgress;
+            // SB: Train moves from North (low %) to South (high %)
+            // Station is passed if train has moved past it (trainProgress > stationProgress)
+            return stationProgress < trainProgress;
         } else {
-            return (stationPercent / 100) >= trainProgress;
+            // NB: Train moves from South (high %) to North (low %)
+            // Station is passed if train has moved past it (trainProgress < stationProgress)
+            return stationProgress > trainProgress;
         }
     };
 
-    const getStationETA = (stationName: string): { relativeMinutes: number; arrivalTime: string } => {
+    // Get station time info - use Departure from predictions for origin/destination, 
+    // use scheduled time from GTFS static for intermediate stations
+    const getStationTimeInfo = (stationName: string): { 
+        departureTime?: string; 
+        scheduledTime?: string; 
+        etaMinutes: number;
+    } => {
+        const isOrigin = stationName === origin;
+        const isDestination = stationName === passedDestination;
+        
+        // For origin/destination, get from predictions
+        if (isOrigin) {
+            const originPred = originPredictions.find(p => p.TrainNumber === train.TrainNumber);
+            if (originPred) {
+                return {
+                    departureTime: originPred.Departure,
+                    scheduledTime: originPred.ScheduledTime,
+                    etaMinutes: parseInt(originPred.ETA.match(/\d+/) ? originPred.ETA.match(/\d+/)![0] : "0")
+                };
+            }
+        }
+        
+        if (isDestination && passedDestination) {
+            const destPred = destinationPredictions.find(p => p.TrainNumber === train.TrainNumber);
+            if (destPred) {
+                return {
+                    departureTime: destPred.Departure,
+                    scheduledTime: destPred.ScheduledTime,
+                    etaMinutes: parseInt(destPred.ETA.match(/\d+/) ? destPred.ETA.match(/\d+/)![0] : "0")
+                };
+            }
+        }
+        
+        // For intermediate stations, use scheduled time from GTFS static (via stationETAMap)
+        // The arrivalTime in stationETAMap is calculated from static schedule
         if (stationETAMap && stationETAMap[stationName]) {
             const eta = stationETAMap[stationName];
+            // For intermediate stations, we only have scheduled time, not departure time
             return {
-                relativeMinutes: eta.etaMinutes,
-                arrivalTime: eta.arrivalTime
+                scheduledTime: eta.arrivalTime, // This is the scheduled time from GTFS
+                etaMinutes: eta.etaMinutes
             };
         }
+        
         if (loading) {
-            return { relativeMinutes: -1, arrivalTime: "LOADING" };
+            return { etaMinutes: -1 };
         }
-        return { relativeMinutes: 0, arrivalTime: "--:--" };
+        return { etaMinutes: 0 };
+    };
+    
+    // Check if a station has passed based on departure time
+    const isStationPassed = (stationName: string): boolean => {
+        const timeInfo = getStationTimeInfo(stationName);
+        if (!timeInfo.departureTime && !timeInfo.scheduledTime) return false;
+        
+        const currentTime = passedCurrentTime || new Date();
+        const timeToCheck = timeInfo.departureTime || timeInfo.scheduledTime;
+        if (!timeToCheck) return false;
+        
+        try {
+            // Parse time like "08:10 PM"
+            const [timePart, period] = timeToCheck.split(" ");
+            const [hours, minutes] = timePart.split(":").map(Number);
+            let hour24 = hours;
+            if (period === "PM" && hours !== 12) hour24 += 12;
+            if (period === "AM" && hours === 12) hour24 = 0;
+            
+            const stationTime = new Date(currentTime);
+            stationTime.setHours(hour24, minutes, 0, 0);
+            
+            // If station time is in the past, it's passed
+            return stationTime < currentTime;
+        } catch (e) {
+            return false;
+        }
     };
 
     // ASCII progress bar builder
@@ -200,30 +268,30 @@ export default function TerminalTimelineView({
             {/* Stations */}
             <div className="space-y-0.5">
                 {visibleStations.map((station, idx) => {
-                    const isPassed = getIsPassed(station.percent);
                     const isOrigin = station.stopname === origin;
                     const isDestination = station.stopname === passedDestination;
-                    const eta = getStationETA(station.stopname);
+                    const timeInfo = getStationTimeInfo(station.stopname);
+                    const isActuallyPassed = isStationPassed(station.stopname);
 
                     // Calculate relative time display
                     let relativeTimeStr = "";
-                    // Only show PASSED if we have vehicle position data (trainProgress > 0 or < 1)
-                    if (isPassed && vehiclePosition) {
-                        // Station has been passed, show PASSED instead of ETA
+                    if (isActuallyPassed) {
                         relativeTimeStr = "PASSED";
-                    } else if (eta.relativeMinutes < 0) {
-                        // Fallback: ETA indicates it's in the past
-                        relativeTimeStr = "PASSED";
-                    } else if (eta.relativeMinutes === 0) {
+                    } else if (timeInfo.etaMinutes === 0) {
                         relativeTimeStr = "NOW";
-                    } else if (eta.relativeMinutes === -1) {
+                    } else if (timeInfo.etaMinutes === -1) {
                         relativeTimeStr = "LOADING";
+                    } else if (timeInfo.etaMinutes > 0) {
+                        relativeTimeStr = `in ${timeInfo.etaMinutes}m`;
                     } else {
-                        relativeTimeStr = `in ${eta.relativeMinutes}m`;
+                        relativeTimeStr = "--";
                     }
-
-                    // Only mark as passed if we have vehicle position data
-                    const isActuallyPassed = isPassed && vehiclePosition;
+                    
+                    // Get display time - show departure time, strike out scheduled if different
+                    const displayTime = timeInfo.departureTime || timeInfo.scheduledTime || "--:--";
+                    const showStruckScheduled = timeInfo.scheduledTime && 
+                                                timeInfo.departureTime && 
+                                                timeInfo.scheduledTime !== timeInfo.departureTime;
 
                     const statusIcon = isActuallyPassed
                         ? isOrigin
@@ -254,13 +322,20 @@ export default function TerminalTimelineView({
                             </div>
                             <div className="flex flex-col items-end gap-0.5 ml-2">
                                 <span className={`text-[10px] ${
-                                    eta.relativeMinutes < 0 ? "text-green-500" : "text-pink-400"
+                                    isActuallyPassed ? "text-green-500" : "text-pink-400"
                                 }`}>
                                     {relativeTimeStr}
                                 </span>
-                                <span className="text-[9px] text-cyan-600">
-                                    {eta.arrivalTime}
-                                </span>
+                                <div className="flex items-center gap-1">
+                                    {showStruckScheduled && (
+                                        <span className="line-through text-gray-500 text-[9px]">
+                                            {timeInfo.scheduledTime}
+                                        </span>
+                                    )}
+                                    <span className="text-[9px] text-cyan-600">
+                                        {displayTime}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     );
