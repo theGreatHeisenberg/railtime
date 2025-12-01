@@ -22,6 +22,7 @@ export default function TerminalCorridorView({
     destination: passedDestination,
     vehiclePositions = [],
     originPredictions: passedOriginPredictions = [],
+    destinationPredictions: passedDestinationPredictions = [],
 }: TerminalCorridorViewProps) {
     const vehiclePosition = vehiclePositions.find(p => p.Vehicle?.Trip?.TripId === train.TrainNumber) || null;
 
@@ -77,28 +78,14 @@ export default function TerminalCorridorView({
     const originIdx = normalizedStations.findIndex(s => s.stopname === origin);
     const destIdx = normalizedStations.findIndex(s => s.stopname === passedDestination);
 
+    // Get departure times for origin and destination
+    const originPrediction = passedOriginPredictions.find(p => p.TrainNumber === train.TrainNumber);
+    const destinationPrediction = passedDestinationPredictions.find(p => p.TrainNumber === train.TrainNumber);
+
     // Build simple corridor with only key elements
     const buildCorridorDots = () => {
-        const dots: Array<{ type: 'station' | 'train' | 'separator'; color: string; label?: string; hiddenCount?: number; isDotted?: boolean }> = [];
-
-        // Find most recently passed station (closest to train but before it)
-        let recentlyPassedIdx = -1;
-        let closestDistToPassed = Infinity;
-
-        for (let i = 0; i < normalizedStations.length; i++) {
-            const stationProgress = normalizedStations[i].percent / 100;
-            const isPassed = train.Direction === "SB"
-                ? stationProgress > trainProgress
-                : stationProgress <= trainProgress;
-
-            if (isPassed) {
-                const distToPassed = Math.abs(stationProgress - trainProgress);
-                if (distToPassed < closestDistToPassed) {
-                    closestDistToPassed = distToPassed;
-                    recentlyPassedIdx = i;
-                }
-            }
-        }
+        const dots: Array<{ type: 'station' | 'train' | 'separator'; color: string; label?: string; hiddenCount?: number; isDotted?: boolean; departureTime?: string; scheduledTime?: string }> = [];
+        const isSB = train.Direction === "SB";
 
         // Find nearest upcoming station (closest to train but after it)
         let nearestUpcomingIdx = -1;
@@ -106,7 +93,7 @@ export default function TerminalCorridorView({
 
         for (let i = 0; i < normalizedStations.length; i++) {
             const stationProgress = normalizedStations[i].percent / 100;
-            const isUpcoming = train.Direction === "SB"
+            const isUpcoming = isSB
                 ? stationProgress < trainProgress
                 : stationProgress > trainProgress;
 
@@ -119,69 +106,90 @@ export default function TerminalCorridorView({
             }
         }
 
-        // Add recently passed station
-        if (recentlyPassedIdx !== -1) {
-            const station = normalizedStations[recentlyPassedIdx];
-            dots.push({ type: 'station', color: 'text-gray-500', label: station.stopname });
+        // Helper function to add separator with hidden count
+        const addSeparator = (hiddenCount?: number, isDotted?: boolean) => {
+            dots.push({
+                type: 'separator',
+                color: 'text-cyan-600',
+                hiddenCount: hiddenCount,
+                isDotted: isDotted
+            });
+        };
 
-            // Count stations between recently passed and train
-            let hiddenBetween = 0;
-            const minIdx = Math.min(recentlyPassedIdx, trainIdx);
-            const maxIdx = Math.max(recentlyPassedIdx, trainIdx);
-            for (let i = minIdx + 1; i < maxIdx; i++) {
-                hiddenBetween++;
-            }
-            if (hiddenBetween > 0) {
-                dots.push({ type: 'separator', color: 'text-cyan-600', hiddenCount: hiddenBetween });
-            } else {
-                dots.push({ type: 'separator', color: 'text-cyan-600' });
-            }
-        } else {
-            dots.push({ type: 'separator', color: 'text-cyan-600' });
-        }
+        // Build elements: Train -> Next Station -> Origin -> Destination
+        // If origin is the next station, skip showing next station separately
 
+        // Add train
         dots.push({ type: 'train', color: 'text-green-400' });
 
-        // Count stations between train and origin, use dotted separator if origin is nearest upcoming
-        let hiddenToOrigin = 0;
+        // Add next station (if it exists and is not the origin)
+        if (nearestUpcomingIdx !== -1 && nearestUpcomingIdx !== originIdx) {
+            let hiddenToNext = 0;
+            const minIdx = Math.min(trainIdx, nearestUpcomingIdx);
+            const maxIdx = Math.max(trainIdx, nearestUpcomingIdx);
+            for (let i = minIdx + 1; i < maxIdx; i++) {
+                hiddenToNext++;
+            }
+            addSeparator(hiddenToNext > 0 ? hiddenToNext : undefined, true);
+
+            const station = normalizedStations[nearestUpcomingIdx];
+            dots.push({ type: 'station', color: 'text-gray-500', label: station.stopname });
+        }
+
+        // Add origin (if it exists)
         if (originIdx !== -1) {
-            const minIdx = Math.min(trainIdx, originIdx);
-            const maxIdx = Math.max(trainIdx, originIdx);
+            // Calculate hidden stations between train/next and origin
+            let hiddenToOrigin = 0;
+            const startIdx = nearestUpcomingIdx !== -1 && nearestUpcomingIdx !== originIdx 
+                ? nearestUpcomingIdx 
+                : trainIdx;
+            const minIdx = Math.min(startIdx, originIdx);
+            const maxIdx = Math.max(startIdx, originIdx);
             for (let i = minIdx + 1; i < maxIdx; i++) {
                 hiddenToOrigin++;
             }
             const isDottedSeparator = originIdx === nearestUpcomingIdx;
-            dots.push({
-                type: 'separator',
-                color: 'text-cyan-600',
-                hiddenCount: hiddenToOrigin > 0 ? hiddenToOrigin : undefined,
-                isDotted: isDottedSeparator
-            });
+            addSeparator(hiddenToOrigin > 0 ? hiddenToOrigin : undefined, isDottedSeparator);
 
             const station = normalizedStations[originIdx];
-            dots.push({ type: 'station', color: 'text-blue-400', label: station.stopname });
+            dots.push({ 
+                type: 'station', 
+                color: 'text-blue-400', 
+                label: station.stopname,
+                departureTime: originPrediction?.Departure,
+                scheduledTime: originPrediction?.ScheduledTime
+            });
         }
 
-        // Add separator and destination if it exists
+        // Add destination if it exists
         if (destIdx !== -1) {
             let hiddenToDest = 0;
-            const minIdx = Math.min(originIdx, destIdx);
-            const maxIdx = Math.max(originIdx, destIdx);
+            const startIdx = originIdx !== -1 ? originIdx : (nearestUpcomingIdx !== -1 ? nearestUpcomingIdx : trainIdx);
+            const minIdx = Math.min(startIdx, destIdx);
+            const maxIdx = Math.max(startIdx, destIdx);
             for (let i = minIdx + 1; i < maxIdx; i++) {
                 hiddenToDest++;
             }
             const isDottedSeparator = destIdx === nearestUpcomingIdx;
-            dots.push({
-                type: 'separator',
-                color: 'text-cyan-600',
-                hiddenCount: hiddenToDest > 0 ? hiddenToDest : undefined,
-                isDotted: isDottedSeparator
-            });
+            addSeparator(hiddenToDest > 0 ? hiddenToDest : undefined, isDottedSeparator);
             const station = normalizedStations[destIdx];
-            dots.push({ type: 'station', color: 'text-orange-400', label: station.stopname });
+            dots.push({ 
+                type: 'station', 
+                color: 'text-orange-400', 
+                label: station.stopname,
+                departureTime: destinationPrediction?.Departure,
+                scheduledTime: destinationPrediction?.ScheduledTime
+            });
         }
 
-        return dots;
+        // For SB, reverse the order so train moves left (←)
+        // NB: Train (→) -> Next Station -> Origin -> Destination
+        // SB: Destination -> Origin -> Next Station -> Train (←)
+        if (isSB) {
+            return dots.reverse();
+        } else {
+            return dots;
+        }
     };
 
     // Find train index for hidden station counting
@@ -235,11 +243,11 @@ export default function TerminalCorridorView({
             </div>
 
             {/* Horizontal corridor dots */}
-            <div className="bg-black border border-cyan-500/20 p-3 space-y-2">
-                <div className="text-cyan-400 text-lg font-mono flex items-center justify-center gap-1">
+            <div className="bg-black border border-cyan-500/20 p-3">
+                <div className="text-cyan-400 text-lg font-mono flex items-start justify-center gap-2">
                     {corridorDots.map((dot, idx) => (
-                        <div key={idx} className="flex flex-col items-center">
-                            <span className={dot.color}>
+                        <div key={idx} className={`flex flex-col items-center justify-start ${dot.type === 'separator' ? 'min-w-[20px]' : 'min-w-[60px]'}`}>
+                            <span className={`${dot.color} leading-none`}>
                                 {dot.type === 'train'
                                     ? (train.Direction === "SB" ? "◀" : "▶")
                                     : dot.type === 'separator'
@@ -247,25 +255,33 @@ export default function TerminalCorridorView({
                                     : "●"
                                 }
                             </span>
-                            {dot.type === 'separator' && dot.hiddenCount && (
-                                <span className="text-cyan-600 text-[8px] whitespace-nowrap">+{dot.hiddenCount}</span>
-                            )}
+                            <div className="flex flex-col items-center justify-start mt-1 min-h-[2rem]">
+                                {dot.type === 'separator' && dot.hiddenCount && (
+                                    <span className="text-cyan-600 text-[8px] whitespace-nowrap leading-none">+{dot.hiddenCount}</span>
+                                )}
+                                {dot.type === 'station' && dot.label && (
+                                    <>
+                                        <span className={`${dot.color} text-[9px] text-center leading-tight max-w-[80px] truncate`} title={dot.label}>
+                                            {dot.label}
+                                        </span>
+                                        {(dot.departureTime || dot.scheduledTime) && (
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                                {dot.scheduledTime && dot.departureTime && dot.scheduledTime !== dot.departureTime && (
+                                                    <span className="line-through text-gray-500 text-[7px]">{dot.scheduledTime}</span>
+                                                )}
+                                                <span className={`${dot.color} text-[7px] leading-none`}>
+                                                    {dot.departureTime || dot.scheduledTime}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                                {dot.type === 'train' && (
+                                    <span className="text-[9px] text-cyan-500 leading-tight">Train</span>
+                                )}
+                            </div>
                         </div>
                     ))}
-                </div>
-
-                {/* Legend */}
-                <div className="text-[9px] space-y-0.5 border-t border-cyan-500/20 pt-2">
-                    <div className="flex gap-2 flex-wrap justify-center">
-                        {corridorDots.find(d => d.type === 'station' && d.color === 'text-gray-500') && (
-                            <span><span className="text-gray-500">●</span> {corridorDots.find(d => d.type === 'station' && d.color === 'text-gray-500')?.label}</span>
-                        )}
-                        <span><span className={train.Direction === "SB" ? "text-red-400" : "text-green-400"}>
-                            {train.Direction === "SB" ? "◀" : "▶"}
-                        </span> Train</span>
-                        <span><span className="text-blue-400">●</span> {origin}</span>
-                        {passedDestination && <span><span className="text-orange-400">●</span> {passedDestination}</span>}
-                    </div>
                 </div>
             </div>
 

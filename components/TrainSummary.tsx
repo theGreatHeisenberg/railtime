@@ -11,7 +11,8 @@ interface TrainSummaryProps {
   etaToDestinationMinutes: number;
   trainReachedOrigin: boolean;
   stations: Station[];
-  currentTime: Date;
+  originPredictions?: TrainPrediction[];
+  destinationPredictions?: TrainPrediction[];
 }
 
 export default function TrainSummary({
@@ -22,18 +23,14 @@ export default function TrainSummary({
   etaToDestinationMinutes,
   trainReachedOrigin,
   stations,
-  currentTime,
+  originPredictions = [],
+  destinationPredictions = [],
 }: TrainSummaryProps) {
   const { theme } = useTheme();
 
-  const getArrivalTime = (etaMinutes: number): string => {
-    const arrivalDate = new Date(currentTime.getTime() + etaMinutes * 60000);
-    return arrivalDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-  };
+  // Get departure times from predictions
+  const originPrediction = originPredictions.find(p => p.TrainNumber === train.TrainNumber);
+  const destinationPrediction = destinationPredictions.find(p => p.TrainNumber === train.TrainNumber);
 
   const delayColor =
     train.delayStatus === "delayed"
@@ -49,34 +46,50 @@ export default function TrainSummary({
         ? `${Math.abs(train.delayMinutes!)}m EARLY`
         : "ON TIME";
 
-  const showDestination = destination && etaToDestinationMinutes > 0;
+  const showDestination = destination && destinationPrediction;
+
+  // Helper to render time with scheduled time struck through if different
+  const renderTime = (departureTime: string | undefined, scheduledTime: string | undefined) => {
+    if (!departureTime) return null;
+    
+    const hasScheduled = scheduledTime && scheduledTime !== departureTime;
+    
+    return (
+      <div className="flex items-center gap-1">
+        {hasScheduled && (
+          <span className="line-through text-gray-500 text-xs">{scheduledTime}</span>
+        )}
+        <span>{departureTime}</span>
+      </div>
+    );
+  };
 
   return (
     <div className={`${theme.colors.bg.card} ${theme.colors.text.primary} rounded-lg p-4 border ${theme.colors.ui.border} transition-colors duration-500`}>
       <div className="space-y-3">
         {/* ETAs Section */}
         <div className={`grid gap-4 ${showDestination ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-          {!trainReachedOrigin && (
+          {!trainReachedOrigin && originPrediction && (
             <div className={`${showDestination ? `border-b md:border-b-0 md:border-r ${theme.colors.ui.divider} pb-4 md:pb-0 md:pr-4` : ""}`}>
               <div className={`text-xs ${theme.colors.text.accent} mb-2`}>ETA to Origin</div>
               <div className={`text-lg font-bold ${delayColor}`}>
                 {etaToOriginMinutes}m
               </div>
               <div className={`text-xs ${theme.colors.text.muted} mt-1`}>
-                Arrive @ {getArrivalTime(etaToOriginMinutes)}
+                Arrive @ {renderTime(originPrediction.Departure, originPrediction.ScheduledTime)}
               </div>
               <div className={`text-xs ${theme.colors.text.accent} mt-0.5`}>{origin}</div>
             </div>
           )}
 
-          {showDestination && (
+          {showDestination && destinationPrediction && (
             <div className={trainReachedOrigin ? "" : "md:pl-4"}>
               <div className={`text-xs ${theme.colors.text.accent} mb-2`}>ETA to Destination</div>
               <div className={`text-lg font-bold ${delayColor}`}>
                 {etaToDestinationMinutes}m
               </div>
               <div className={`text-xs ${theme.colors.text.muted} mt-1`}>
-                Arrive @ {getArrivalTime(etaToDestinationMinutes)}
+                Arrive @ {renderTime(destinationPrediction.Departure, destinationPrediction.ScheduledTime)}
               </div>
               <div className={`text-xs ${theme.colors.text.accent} mt-0.5`}>{destination}</div>
             </div>
