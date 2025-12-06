@@ -1,0 +1,114 @@
+# Implementation Plan
+
+- [x] 1. Add time filter types and utilities
+  - [x] 1.1 Add time filter types to lib/types.ts
+    - Add `TimeFilterMode` type ("arrive_by" | "leave_by")
+    - Add `TimeFilterInfo` interface
+    - Add `ValidatedTimeFilter` and `TimeFilterValidation` types
+    - Extend `JourneySearchResponse` with optional `timeFilterInfo`
+    - Extend `Journey` with `minutesBeforeTarget` and `isBestMatch` fields
+    - _Requirements: 3.1, 3.2_
+  - [x] 1.2 Create time filter utility functions in lib/timeFilterUtils.ts
+    - Implement `parseTargetTime()` to handle ISO 8601 and Unix timestamps
+    - Implement `isTimeInFuture()` validation
+    - Implement `validateTimeFilterParams()` for API parameter validation
+    - Implement `calculateMinutesBeforeTarget()` for time difference calculation
+    - Implement `getNextHourRoundedUp()` for default time picker value
+    - Implement `getFutureQuickSelectTimes()` for quick select options
+    - _Requirements: 3.2, 3.5, 4.5, 5.3, 5.4, 6.3_
+  - [ ]* 1.3 Write property tests for time filter utilities
+    - **Property 5: Past Time Rejection** - verify past times are detected
+    - **Property 8: Minutes Before Target Calculation** - verify calculation accuracy
+    - **Property 10: Quick Select Future Times Only** - verify only future times returned
+    - **Property 11: Default Time Picker Value** - verify next hour rounding
+    - **Validates: Requirements 1.4, 2.4, 4.5, 5.3, 5.4, 6.3**
+
+- [-] 2. Implement time filter logic for Journey API
+  - [x] 2.1 Create journey filtering functions in lib/journeyFilters.ts
+    - Implement `filterJourneysByArriveBy()` to filter by arrival time
+    - Implement `filterJourneysByLeaveBy()` to filter by departure time
+    - Implement `sortJourneysByTimeFilter()` for descending sort by relevant time
+    - Implement `markBestMatch()` to identify journey closest to target
+    - _Requirements: 1.1, 1.2, 2.1, 2.2_
+  - [ ]* 2.2 Write property tests for journey filtering
+    - **Property 1: Arrive By Filter Correctness** - all arrivals ≤ target
+    - **Property 2: Arrive By Sort Order** - descending by arrival time
+    - **Property 3: Leave By Filter Correctness** - all departures ≤ target
+    - **Property 4: Leave By Sort Order** - descending by departure time
+    - **Property 6: Default Sort Order Preservation** - ascending departure when no filter
+    - **Validates: Requirements 1.1, 1.2, 2.1, 2.2, 3.3**
+
+- [x] 3. Update Journey API endpoint
+  - [x] 3.1 Extend /api/journeys/route.ts to accept time filter parameters
+    - Parse `timeFilter` and `targetTime` from query parameters
+    - Validate parameters using `validateTimeFilterParams()`
+    - Return 400 errors for invalid parameters with clear messages
+    - _Requirements: 3.1, 3.2, 3.4, 3.5_
+  - [x] 3.2 Integrate time filtering into journey response
+    - Apply `filterJourneysByArriveBy()` or `filterJourneysByLeaveBy()` based on mode
+    - Apply `sortJourneysByTimeFilter()` for correct sort order
+    - Calculate and add `minutesBeforeTarget` to each journey
+    - Mark `isBestMatch` on the first result
+    - Add `timeFilterInfo` to response metadata
+    - _Requirements: 1.1, 1.2, 2.1, 2.2, 5.3, 5.4_
+  - [x] 3.3 Handle empty results with helpful messages
+    - Return empty journeys array with appropriate message in `timeFilterInfo`
+    - Include suggestions array for alternative actions
+    - _Requirements: 1.3, 2.3_
+  - [ ]* 3.4 Write unit tests for Journey API time filter integration
+    - Test arrive_by filtering returns correct journeys
+    - Test leave_by filtering returns correct journeys
+    - Test error responses for invalid parameters
+    - Test empty results include helpful messages
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 3.4, 3.5_
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 5. Build time filter UI components
+  - [x] 5.1 Create TimeFilterSelector component
+    - Create dropdown with "Depart Now", "Leave By", "Arrive By" options
+    - Handle selection changes and emit events
+    - Style consistently with existing UI components
+    - _Requirements: 4.1_
+  - [x] 5.2 Create TimePicker component
+    - Create time input with hour/minute selection
+    - Implement `getNextHourRoundedUp()` for default value
+    - Add quick-select buttons for common times (9 AM, 12 PM, 5 PM, 6 PM)
+    - Filter quick-select to only show future times
+    - _Requirements: 4.2, 4.5, 6.1, 6.2, 6.3, 6.4_
+  - [x] 5.3 Integrate time filter controls into CleanJourneyView
+    - Add TimeFilterSelector above journey results
+    - Conditionally show TimePicker when "Leave By" or "Arrive By" selected
+    - Hide TimePicker when "Depart Now" selected
+    - Trigger journey search on filter/time changes
+    - _Requirements: 4.1, 4.2, 4.3, 4.4_
+  - [ ]* 5.4 Write unit tests for time filter UI components
+    - Test TimeFilterSelector renders all options
+    - Test TimePicker shows/hides based on mode
+    - Test quick-select buttons filter to future times
+    - Test default time is next hour rounded up
+    - _Requirements: 4.1, 4.2, 4.3, 4.5, 6.1, 6.3_
+
+- [x] 6. Implement time filter result display
+  - [x] 6.1 Update journey result cards to show time filter context
+    - Highlight arrival time for arrive_by mode
+    - Highlight departure time for leave_by mode
+    - Display "X min before target" badge using `minutesBeforeTarget`
+    - Add "Best Match" indicator for `isBestMatch` journey
+    - Added `isRealtime` field to distinguish live vs scheduled trains
+    - All theme variants (Standard, Playful, Flat, Upside Down, Linear/Deco) updated
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [x] 6.2 Add empty results UI with suggestions
+    - Display message when no journeys match filter
+    - Show suggestions: "Try +1 hour later", "Switch to Leave By/Arrive By", "Show departing now"
+    - _Requirements: 5.5_
+  - [ ]* 6.3 Write unit tests for result display components
+    - Test correct time is highlighted based on mode
+    - Test minutes before target displays correctly
+    - Test best match indicator shows on first result
+    - Test empty results show suggestions
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+
+- [ ] 7. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

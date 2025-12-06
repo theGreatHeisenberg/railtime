@@ -1,0 +1,279 @@
+# Implementation Plan
+
+- [ ] 1. Set up Clarity Design System foundation
+  - [ ] 1.1 Create design tokens file with colors, typography, spacing, and motion values
+    - Create `lib/clarity-tokens.ts` with all design token definitions
+    - Export typed constants for colors, elevation, spacing, typography, borders, and motion
+    - _Requirements: 6.1, 6.2, 6.4_
+  - [ ] 1.2 Create physics-based animation utilities
+    - Create `lib/clarity-animations.ts` with easing functions and animation presets
+    - Implement spring, gravity, and inertia-based easing curves
+    - Add stagger utilities for coordinated animations
+    - _Requirements: 6.3_
+  - [ ]* 1.3 Write property test for physics-based easing
+    - **Property 21: Physics-Based Easing**
+    - **Validates: Requirements 6.3**
+
+- [ ] 2. Implement Feedback Orchestrator system
+  - [ ] 2.1 Create FeedbackOrchestrator class
+    - Create `lib/FeedbackOrchestrator.ts` with action registration and feedback triggering
+    - Implement feedback queuing and batching
+    - Add cancellation support for interrupted actions
+    - _Requirements: 3.1, 8.5_
+  - [ ] 2.2 Implement immediate feedback mechanism
+    - Add feedback timing measurement
+    - Ensure all feedback triggers within 100ms
+    - _Requirements: 3.1_
+  - [ ]* 2.3 Write property test for feedback timing
+    - **Property 8: Feedback Timing Constraint**
+    - **Validates: Requirements 3.1**
+
+- [ ] 3. Implement Visual Connector System
+  - [ ] 3.1 Create ConnectorSystem component
+    - Create `components/clarity/VisualConnector.tsx` for drawing connections between elements
+    - Support line, curve, glow, and proximity connector styles
+    - Implement animated connectors with pulse effect
+    - _Requirements: 5.1, 5.3_
+  - [ ] 3.2 Integrate connectors with train selection
+    - Add connector between selected train card and details panel
+    - Show connector animation on selection
+    - _Requirements: 1.1, 5.1, 8.1_
+  - [ ]* 3.3 Write property test for visual relationship connectors
+    - **Property 15: Visual Relationship Connectors**
+    - **Validates: Requirements 5.1**
+
+- [ ] 4. Implement State Highlighter system
+  - [ ] 4.1 Create StateHighlighter utilities
+    - Create `lib/StateHighlighter.ts` with highlight, dim, and preview functions
+    - Implement selection highlighting with dimming of non-selected elements
+    - Add hover preview state management
+    - _Requirements: 1.1, 1.5, 8.3_
+  - [ ] 4.2 Implement hover preview for train cards
+    - Show preview state on hover before selection
+    - Preview details panel content on hover
+    - _Requirements: 1.5, 8.3_
+  - [ ]* 4.3 Write property test for hover preview state
+    - **Property 4: Hover Preview State**
+    - **Validates: Requirements 1.5, 8.3**
+
+- [ ] 5. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 6. Implement Motion Path System for filtering
+  - [ ] 6.1 Create MotionPathSystem utilities
+    - Create `lib/MotionPathSystem.ts` with path animation functions
+    - Implement pullForward and releaseBackward effects
+    - Add swapWithCross animation for station swap
+    - _Requirements: 1.2, 1.3, 2.2, 2.3_
+  - [ ] 6.2 Integrate filter animations with journey list
+    - Animate trains when filters change (pull forward/release backward)
+    - Show smooth reordering instead of instant state change
+    - _Requirements: 1.2, 1.3, 2.2, 8.2_
+  - [ ] 6.3 Implement swap animation for origin/destination
+    - Add crossing motion animation when swapping stations
+    - _Requirements: 2.3_
+  - [ ]* 6.4 Write property test for filter transformation animation
+    - **Property 2: Filter Transformation Animation**
+    - **Validates: Requirements 1.2, 1.3, 2.2, 8.2**
+  - [ ]* 6.5 Write property test for swap animation direction
+    - **Property 6: Swap Animation Direction**
+    - **Validates: Requirements 2.3**
+
+- [ ] 7. Implement Selection Dialogue system
+  - [ ] 7.1 Create selection dialogue sequence
+    - Implement coordinated animation: highlight → panel slide → content reveal
+    - Add staggered content reveal in details panel
+    - _Requirements: 2.1, 2.5, 8.1_
+  - [ ] 7.2 Update TrainCard component with selection dialogue
+    - Add highlight animation on selection
+    - Coordinate with details panel animation
+    - _Requirements: 1.1, 8.1_
+  - [ ]* 7.3 Write property test for selection dialogue sequence
+    - **Property 1: Selection Dialogue Sequence**
+    - **Validates: Requirements 1.1, 8.1**
+  - [ ]* 7.4 Write property test for coordinated animation timing
+    - **Property 5: Coordinated Animation Timing**
+    - **Validates: Requirements 2.1, 2.5**
+
+- [ ] 8. Implement Data Change Highlighting
+  - [ ] 8.1 Create data change detection and highlighting
+    - Track previous values and detect changes on refresh
+    - Apply temporary highlight class to changed elements
+    - _Requirements: 1.4_
+  - [ ] 8.2 Implement status transition animations
+    - Add pulse/glow animation for Scheduled → Live transitions
+    - _Requirements: 2.4_
+  - [ ]* 8.3 Write property test for data change highlighting
+    - **Property 3: Data Change Highlighting**
+    - **Validates: Requirements 1.4**
+  - [ ]* 8.4 Write property test for status transition animation
+    - **Property 7: Status Transition Animation**
+    - **Validates: Requirements 2.4**
+
+- [ ] 9. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 10. Implement Calm Feedback System
+  - [ ] 10.1 Create CalmFeedback utilities
+    - Create `lib/CalmFeedback.ts` with loading, success, error, and undo functions
+    - Implement honest loading indicators (determinate/indeterminate)
+    - _Requirements: 3.2, 3.3, 3.4_
+  - [ ] 10.2 Create calm error message component
+    - Create `components/clarity/CalmError.tsx` with recovery options
+    - Ensure no anxiety-inducing language
+    - _Requirements: 3.3_
+  - [ ] 10.3 Implement undo system
+    - Add undo stack for reversible actions
+    - Show visible undo option after selections
+    - _Requirements: 3.4, 7.5_
+  - [ ]* 10.4 Write property test for honest loading indicators
+    - **Property 9: Honest Loading Indicators**
+    - **Validates: Requirements 3.2**
+  - [ ]* 10.5 Write property test for calm error messages
+    - **Property 10: Calm Error Messages**
+    - **Validates: Requirements 3.3**
+  - [ ]* 10.6 Write property test for undo availability
+    - **Property 11: Undo Availability**
+    - **Validates: Requirements 3.4**
+
+- [ ] 11. Implement Calm Language system
+  - [ ] 11.1 Create language validation utilities
+    - Create `lib/calmLanguage.ts` with anxiety word detection
+    - Implement factual language guidelines
+    - _Requirements: 3.5, 7.3_
+  - [ ] 11.2 Update time displays with calm language
+    - Remove urgency phrases from all time-sensitive displays
+    - Use factual, neutral language
+    - _Requirements: 3.5, 7.3_
+  - [ ]* 11.3 Write property test for calm language in time displays
+    - **Property 12: Calm Language in Time Displays**
+    - **Validates: Requirements 3.5, 7.3**
+
+- [ ] 12. Implement Progressive Disclosure
+  - [ ] 12.1 Create ProgressiveDisclosure controller
+    - Create `lib/ProgressiveDisclosure.ts` with disclosure level management
+    - Implement expand/collapse with animations
+    - _Requirements: 4.1, 4.3_
+  - [ ] 12.2 Update journey list with information hierarchy
+    - Show essential info by default, secondary on demand
+    - _Requirements: 4.1_
+  - [ ] 12.3 Update train details with progressive disclosure
+    - Collapse stop-by-stop info by default
+    - Expand on user request with staggered animation
+    - _Requirements: 4.3_
+  - [ ]* 12.4 Write property test for information hierarchy
+    - **Property 13: Information Hierarchy**
+    - **Validates: Requirements 4.1**
+  - [ ]* 12.5 Write property test for progressive disclosure
+    - **Property 14: Progressive Disclosure for Details**
+    - **Validates: Requirements 4.3**
+
+- [ ] 13. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 14. Implement Visual Relationship indicators
+  - [ ] 14.1 Add active filter indication
+    - Show persistent indicators for active filters
+    - _Requirements: 5.2_
+  - [ ] 14.2 Add route path visualization
+    - Show visual path between origin and destination
+    - _Requirements: 5.3_
+  - [ ] 14.3 Ensure information containment
+    - Add clear visual boundaries for each train card
+    - _Requirements: 5.5_
+  - [ ]* 14.4 Write property test for active filter indication
+    - **Property 16: Active Filter Indication**
+    - **Validates: Requirements 5.2**
+  - [ ]* 14.5 Write property test for route path visualization
+    - **Property 17: Route Path Visualization**
+    - **Validates: Requirements 5.3**
+  - [ ]* 14.6 Write property test for information containment
+    - **Property 18: Information Containment**
+    - **Validates: Requirements 5.5**
+
+- [ ] 15. Apply Calm Visual Language
+  - [ ] 15.1 Update color usage to reserve accents for state changes
+    - Audit and update all accent color usage
+    - _Requirements: 6.1_
+  - [ ] 15.2 Update shadows to soft elevation
+    - Replace aggressive shadows with soft elevation values
+    - _Requirements: 6.2_
+  - [ ] 15.3 Update typography for scanning optimization
+    - Apply consistent hierarchy and spacing
+    - _Requirements: 6.4_
+  - [ ]* 15.4 Write property test for accent color reservation
+    - **Property 19: Accent Color Reservation**
+    - **Validates: Requirements 6.1**
+  - [ ]* 15.5 Write property test for soft shadow values
+    - **Property 20: Soft Shadow Values**
+    - **Validates: Requirements 6.2**
+  - [ ]* 15.6 Write property test for typography hierarchy
+    - **Property 22: Typography Hierarchy**
+    - **Validates: Requirements 6.4**
+
+- [ ] 16. Implement Ethical Interaction patterns
+  - [ ] 16.1 Audit and remove dark patterns
+    - Ensure all options are visible and accessible
+    - Use clear language and neutral defaults
+    - _Requirements: 7.1_
+  - [ ] 16.2 Remove artificial urgency
+    - Remove countdown timers and scarcity messaging
+    - Use appropriate colors for criticality level
+    - _Requirements: 7.2_
+  - [ ] 16.3 Add data source transparency
+    - Show clear data source indicator (Live/Scheduled/Cached)
+    - Display data freshness information
+    - _Requirements: 7.4_
+  - [ ]* 16.4 Write property test for no dark patterns
+    - **Property 23: No Dark Patterns**
+    - **Validates: Requirements 7.1**
+  - [ ]* 16.5 Write property test for no artificial urgency
+    - **Property 24: No Artificial Urgency**
+    - **Validates: Requirements 7.2**
+  - [ ]* 16.6 Write property test for data source transparency
+    - **Property 25: Data Source Transparency**
+    - **Validates: Requirements 7.4**
+  - [ ]* 16.7 Write property test for action reversibility
+    - **Property 26: Action Reversibility**
+    - **Validates: Requirements 7.5**
+
+- [ ] 17. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 18. Implement Dialogue Completion and Consistency
+  - [ ] 18.1 Add action completion feedback
+    - Show visual confirmation for completed actions
+    - _Requirements: 8.5_
+  - [ ] 18.2 Ensure pattern consistency across UI
+    - Audit and standardize similar element styling
+    - _Requirements: 8.4_
+  - [ ] 18.3 Ensure navigation consistency
+    - Standardize transition patterns across views
+    - _Requirements: 9.2_
+  - [ ]* 18.4 Write property test for action completion feedback
+    - **Property 28: Action Completion Feedback**
+    - **Validates: Requirements 8.5**
+  - [ ]* 18.5 Write property test for pattern consistency
+    - **Property 27: Pattern Consistency**
+    - **Validates: Requirements 8.4**
+  - [ ]* 18.6 Write property test for navigation consistency
+    - **Property 29: Navigation Consistency**
+    - **Validates: Requirements 9.2**
+
+- [ ] 19. Implement Discoverability and Error Recovery
+  - [ ] 19.1 Add feature discoverability hints
+    - Add inline hints and tooltips for features
+    - _Requirements: 9.4_
+  - [ ] 19.2 Implement graceful error recovery
+    - Ensure errors don't break UI functionality
+    - Provide clear recovery paths
+    - _Requirements: 9.5_
+  - [ ]* 19.3 Write property test for feature discoverability
+    - **Property 30: Feature Discoverability**
+    - **Validates: Requirements 9.4**
+  - [ ]* 19.4 Write property test for graceful error recovery
+    - **Property 31: Graceful Error Recovery**
+    - **Validates: Requirements 9.5**
+
+- [ ] 20. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.

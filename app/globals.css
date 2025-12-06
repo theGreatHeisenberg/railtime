@@ -11,6 +11,12 @@
   --font-mono: var(--font-geist-mono);
   --font-creepster: var(--font-creepster);
   --font-mountains: var(--font-mountains);
+  --font-outfit: var(--font-outfit);
+  --font-marcellus: var(--font-marcellus);
+  --font-josefin: var(--font-josefin);
+  --font-jakarta: var(--font-jakarta);
+  --font-kalam: var(--font-kalam);
+  --font-patrick-hand: var(--font-patrick-hand);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,6 +50,40 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  
+  /* Bauhaus Design System Colors */
+  --color-bauhaus-red: #D02020;
+  --color-bauhaus-blue: #1040C0;
+  --color-bauhaus-yellow: #F0C020;
+  --color-bauhaus-black: #121212;
+  --color-bauhaus-white: #F0F0F0;
+  --color-bauhaus-muted: #E0E0E0;
+  
+  /* Sketch/Hand-Drawn Design System Colors */
+  --color-sketch-paper: #fdfbf7;
+  --color-sketch-pencil: #2d2d2d;
+  --color-sketch-muted: #e5e0d8;
+  --color-sketch-accent: #ff4d4d;
+  --color-sketch-blue: #2d5da1;
+  --color-sketch-postit: #fff9c4;
+  
+  /* Sketch wobbly border radius values */
+  --sketch-wobbly: 255px 15px 225px 15px / 15px 225px 15px 255px;
+  --sketch-wobbly-md: 95px 4px 97px 5px / 4px 95px 6px 95px;
+  --sketch-wobbly-sm: 40px 8px 45px 6px / 8px 42px 7px 40px;
+  
+  /* Font families for Sketch theme */
+  --font-kalam: var(--font-kalam);
+  --font-patrick-hand: var(--font-patrick-hand);
+  
+  /* Playful Geometric Design System Colors */
+  --color-playful-cream: #FFFDF5;
+  --color-playful-slate: #1E293B;
+  --color-playful-violet: #8B5CF6;
+  --color-playful-pink: #F472B6;
+  --color-playful-amber: #FBBF24;
+  --color-playful-mint: #34D399;
+  --color-playful-muted: #64748B;
 }
 
 :root {
@@ -125,6 +165,1051 @@
   }
 }
 
+/* Bauhaus Design System Utilities */
+@utility shadow-bauhaus-sm {
+  box-shadow: 4px 4px 0px 0px #121212;
+}
+
+@utility shadow-bauhaus-md {
+  box-shadow: 6px 6px 0px 0px #121212;
+}
+
+@utility shadow-bauhaus-lg {
+  box-shadow: 8px 8px 0px 0px #121212;
+}
+
+@utility bauhaus-btn-press {
+  &:active {
+    transform: translateX(2px) translateY(2px);
+    box-shadow: none;
+  }
+}
+
+/* Bauhaus geometric decorations */
+@utility bauhaus-dot-pattern {
+  background-image: radial-gradient(#121212 2px, transparent 2px);
+  background-size: 20px 20px;
+}
+
+/* Bauhaus triangle clip path */
+@utility clip-triangle {
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
 @utility animate-pulse-slow {
   animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Train track particle animation */
+@keyframes track-particle {
+  0% {
+    transform: translateX(-10px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(10px);
+    opacity: 0;
+  }
+}
+
+@utility animate-track-particle {
+  animation: track-particle 2s ease-in-out infinite;
+}
+
+/* Train bounce animation */
+@keyframes train-bounce {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-55%);
+  }
+}
+
+@utility animate-train-bounce {
+  animation: train-bounce 2s ease-in-out infinite;
+}
+
+/* Countdown pulse */
+@keyframes countdown-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@utility animate-countdown {
+  animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+/* Clarity-First UX: ETA Change Highlight Animation */
+@keyframes eta-highlight {
+  0% {
+    background-color: rgba(34, 197, 94, 0.3);
+    transform: scale(1.05);
+  }
+  50% {
+    background-color: rgba(34, 197, 94, 0.15);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+@utility animate-eta-change {
+  animation: eta-highlight 2s ease-out forwards;
+  border-radius: 4px;
+}
+
+/* Dark theme variant for ETA highlight */
+@keyframes eta-highlight-dark {
+  0% {
+    background-color: rgba(52, 211, 153, 0.3);
+    transform: scale(1.05);
+  }
+  50% {
+    background-color: rgba(52, 211, 153, 0.15);
+    transform: scale(1.02);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+@utility animate-eta-change-dark {
+  animation: eta-highlight-dark 2s ease-out forwards;
+  border-radius: 4px;
+}
+
+/* Clarity-First UX: Staggered reveal animation for stops list */
+@keyframes stop-reveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stop-reveal-item {
+  animation: stop-reveal 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* Sketch/Hand-Drawn Design System Utilities */
+
+/* Sketch hard offset shadows - no blur, cut-paper aesthetic */
+@utility sketch-shadow {
+  box-shadow: 4px 4px 0px 0px #2d2d2d;
+}
+
+@utility sketch-shadow-lg {
+  box-shadow: 8px 8px 0px 0px #2d2d2d;
+}
+
+@utility sketch-shadow-hover {
+  box-shadow: 2px 2px 0px 0px #2d2d2d;
+}
+
+@utility sketch-shadow-soft {
+  box-shadow: 3px 3px 0px 0px rgba(45, 45, 45, 0.1);
+}
+
+/* Sketch paper texture - dot pattern background */
+@utility sketch-paper {
+  background-color: #fdfbf7;
+  background-image: radial-gradient(#e5e0d8 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Sketch wobbly border utilities */
+.sketch-wobbly {
+  border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+}
+
+.sketch-wobbly-md {
+  border-radius: 95px 4px 97px 5px / 4px 95px 6px 95px;
+}
+
+.sketch-wobbly-sm {
+  border-radius: 40px 8px 45px 6px / 8px 42px 7px 40px;
+}
+
+/* Sketch tape decoration */
+.sketch-tape {
+  position: relative;
+}
+
+.sketch-tape::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 60px;
+  height: 20px;
+  background: rgba(200, 200, 200, 0.6);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+/* Sketch thumbtack decoration */
+.sketch-tack {
+  position: relative;
+}
+
+.sketch-tack::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 14px;
+  background: #ff4d4d;
+  border-radius: 50%;
+  border: 2px solid #2d2d2d;
+  box-shadow: 2px 2px 0px 0px rgba(45, 45, 45, 0.3);
+  pointer-events: none;
+}
+
+/* Sketch post-it yellow background */
+@utility sketch-postit {
+  background-color: #fff9c4;
+}
+
+/* Sketch dashed border style */
+@utility sketch-dashed {
+  border-style: dashed;
+}
+
+/* Sketch jiggle animation on hover */
+@keyframes sketch-jiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+@utility animate-sketch-jiggle {
+  animation: sketch-jiggle 0.3s ease-in-out;
+}
+
+/* Sketch bounce animation for decorative elements */
+@keyframes sketch-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@utility animate-sketch-bounce {
+  animation: sketch-bounce 3s ease-in-out infinite;
+}
+
+/* Sketch button press effect */
+.sketch-btn-press {
+  transition: all 100ms ease;
+}
+
+.sketch-btn-press:hover {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px 0px #2d2d2d;
+}
+
+.sketch-btn-press:active {
+  transform: translate(4px, 4px);
+  box-shadow: none;
+}
+
+/* Sketch card with rotation */
+.sketch-card-tilt-left {
+  transform: rotate(-1deg);
+}
+
+.sketch-card-tilt-right {
+  transform: rotate(1deg);
+}
+
+/* Sketch underline decoration */
+.sketch-underline {
+  position: relative;
+}
+
+.sketch-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 6'%3E%3Cpath d='M0 3 Q25 0 50 3 T100 3' stroke='%23ff4d4d' fill='none' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
+  background-size: 100px 6px;
+}
+
+/* Sketch font utilities */
+@utility font-sketch-heading {
+  font-family: var(--font-kalam), cursive;
+  font-weight: 700;
+}
+
+@utility font-sketch-body {
+  font-family: var(--font-patrick-hand), cursive;
+  font-weight: 400;
+}
+
+
+/* Playful Geometric Design System Utilities */
+@utility playful-shadow {
+  box-shadow: 4px 4px 0px 0px #1E293B;
+}
+
+@utility playful-shadow-hover {
+  box-shadow: 6px 6px 0px 0px #1E293B;
+}
+
+@utility playful-shadow-active {
+  box-shadow: 2px 2px 0px 0px #1E293B;
+}
+
+@utility playful-shadow-soft {
+  box-shadow: 8px 8px 0px 0px #E2E8F0;
+}
+
+@utility playful-shadow-pink {
+  box-shadow: 6px 6px 0px 0px #F472B6;
+}
+
+@utility playful-shadow-violet {
+  box-shadow: 6px 6px 0px 0px #8B5CF6;
+}
+
+/* Playful dot grid background */
+@utility playful-dots {
+  background-image: radial-gradient(#E2E8F0 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+}
+
+/* Playful bounce transition */
+@utility playful-bounce {
+  transition: all 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Playful wiggle animation */
+@keyframes playful-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+@utility animate-wiggle {
+  animation: playful-wiggle 0.5s ease-in-out;
+}
+
+/* Playful pop-in animation */
+@keyframes playful-pop {
+  0% { transform: scale(0); opacity: 0; }
+  70% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@utility animate-pop {
+  animation: playful-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Playful blob shapes */
+@utility playful-blob-tl {
+  border-radius: 1rem 1rem 1rem 0;
+}
+
+@utility playful-blob-tr {
+  border-radius: 1rem 1rem 0 1rem;
+}
+
+@utility playful-blob-br {
+  border-radius: 1rem 0 1rem 1rem;
+}
+
+@utility playful-blob-bl {
+  border-radius: 0 1rem 1rem 1rem;
+}
+
+/* Playful arch shape */
+@utility playful-arch {
+  border-radius: 9999px 9999px 0 0;
+}
+
+/* Playful pill shape */
+@utility playful-pill {
+  border-radius: 9999px;
+}
+
+/* Playful confetti decorations */
+.playful-confetti::before,
+.playful-confetti::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+}
+
+.playful-confetti::before {
+  width: 12px;
+  height: 12px;
+  background: #FBBF24;
+  border-radius: 50%;
+  top: -6px;
+  right: 20%;
+}
+
+.playful-confetti::after {
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 14px solid #F472B6;
+  bottom: -7px;
+  left: 15%;
+  transform: rotate(15deg);
+}
+
+/* Playful squiggle underline */
+.playful-squiggle {
+  position: relative;
+}
+
+.playful-squiggle::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4'%3E%3Cpath d='M0 2 Q5 0 10 2 T20 2' stroke='%238B5CF6' fill='none' stroke-width='2'/%3E%3C/svg%3E") repeat-x;
+  background-size: 20px 4px;
+}
+
+
+/* ============================================
+   MINIMALIST MONOCHROME DESIGN SYSTEM
+   ============================================ */
+
+@theme inline {
+  /* Mono Design System Colors - Pure Black & White */
+  --color-mono-bg: #FFFFFF;
+  --color-mono-fg: #000000;
+  --color-mono-muted: #F5F5F5;
+  --color-mono-muted-fg: #525252;
+  --color-mono-border: #000000;
+  --color-mono-border-light: #E5E5E5;
+  
+  /* Font families for Mono theme */
+  --font-playfair: var(--font-playfair);
+  --font-source-serif: var(--font-source-serif);
+}
+
+/* Mono paper texture - subtle noise for editorial feel */
+@utility mono-paper {
+  background-color: #FFFFFF;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+}
+
+.mono-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.02;
+  pointer-events: none;
+}
+
+/* Mono horizontal lines pattern */
+@utility mono-lines {
+  position: relative;
+}
+
+.mono-lines::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    #000 1px,
+    #000 2px
+  );
+  background-size: 100% 4px;
+  opacity: 0.015;
+  pointer-events: none;
+}
+
+/* Mono grid pattern for editorial sections */
+@utility mono-grid {
+  position: relative;
+}
+
+.mono-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(#00000008 1px, transparent 1px),
+    linear-gradient(90deg, #00000008 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Mono thick horizontal rule */
+@utility mono-rule {
+  border: none;
+  height: 4px;
+  background-color: #000000;
+}
+
+@utility mono-rule-thin {
+  border: none;
+  height: 1px;
+  background-color: #000000;
+}
+
+@utility mono-rule-ultra {
+  border: none;
+  height: 8px;
+  background-color: #000000;
+}
+
+/* Mono card - sharp corners, black border */
+@utility mono-card {
+  background: #FFFFFF;
+  border: 1px solid #000000;
+  border-radius: 0;
+}
+
+@utility mono-card-thick {
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  border-radius: 0;
+}
+
+/* Mono inverted card - for emphasis */
+@utility mono-card-inverted {
+  background: #000000;
+  color: #FFFFFF;
+  border-radius: 0;
+}
+
+/* Mono button styles */
+.mono-btn {
+  background: #000000;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0;
+  padding: 1rem 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 100ms;
+}
+
+.mono-btn:hover {
+  background: #FFFFFF;
+  color: #000000;
+  outline: 2px solid #000000;
+  outline-offset: -2px;
+}
+
+.mono-btn:focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 3px;
+}
+
+.mono-btn-outline {
+  background: transparent;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 1rem 2rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 100ms;
+}
+
+.mono-btn-outline:hover {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+/* Mono input styles */
+.mono-input {
+  background: #FFFFFF;
+  border: none;
+  border-bottom: 2px solid #000000;
+  border-radius: 0;
+  padding: 0.75rem 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  transition: border-width 100ms;
+}
+
+.mono-input:focus {
+  outline: none;
+  border-bottom-width: 4px;
+}
+
+.mono-input::placeholder {
+  color: #525252;
+  font-style: italic;
+}
+
+/* Mono typography utilities */
+@utility font-mono-display {
+  font-family: var(--font-playfair), Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+@utility font-mono-body {
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-weight: 400;
+  line-height: 1.625;
+}
+
+/* Mono hover inversion effect */
+.mono-hover-invert {
+  transition: all 100ms;
+}
+
+.mono-hover-invert:hover {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+/* Mono focus states */
+.mono-focus:focus-visible {
+  outline: 3px solid #000000;
+  outline-offset: 3px;
+}
+
+/* Mono link underline */
+.mono-link {
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 100ms;
+}
+
+.mono-link:hover {
+  border-bottom-color: #000000;
+}
+
+/* Mono section divider with square */
+.mono-divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mono-divider::before,
+.mono-divider::after {
+  content: '';
+  flex: 1;
+  height: 4px;
+  background: #000000;
+}
+
+.mono-divider-square {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #000000;
+  background: #FFFFFF;
+}
+
+/* Mono oversized quote marks */
+.mono-quote::before {
+  content: '"';
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 6rem;
+  line-height: 1;
+  color: #000000;
+  opacity: 0.1;
+  position: absolute;
+  top: -1rem;
+  left: -0.5rem;
+}
+
+/* Mono drop cap */
+.mono-dropcap::first-letter {
+  float: left;
+  font-family: var(--font-playfair), Georgia, serif;
+  font-size: 4rem;
+  line-height: 1;
+  font-weight: 700;
+  margin-right: 0.5rem;
+  margin-top: 0.25rem;
+  border: 2px solid #000000;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .mono-btn,
+  .mono-btn-outline,
+  .mono-hover-invert,
+  .mono-link {
+    transition: none !important;
+  }
+}
+
+
+/* ============================================
+   MINIMALIST (SWISS INTERNATIONAL) DESIGN SYSTEM
+   Swiss Typographic Style - Objective, Grid-Based, Precise
+   ============================================ */
+
+@theme inline {
+  /* Swiss International Colors - Strict Palette */
+  --color-minimalist-bg: #FFFFFF;
+  --color-minimalist-fg: #000000;
+  --color-minimalist-muted: #F2F2F2;
+  --color-minimalist-accent: #FF3000;
+  --color-minimalist-border: #000000;
+  
+  /* Font family for Minimalist theme */
+  --font-inter: var(--font-inter);
+}
+
+/* Swiss grid pattern - 24px visible structure */
+@utility minimalist-grid {
+  position: relative;
+}
+
+.minimalist-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  pointer-events: none;
+}
+
+/* Swiss dot matrix pattern - 16px spacing */
+@utility minimalist-dots {
+  position: relative;
+}
+
+.minimalist-dots::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+  pointer-events: none;
+}
+
+/* Swiss diagonal lines pattern */
+@utility minimalist-diagonal {
+  position: relative;
+}
+
+.minimalist-diagonal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 9px,
+    rgba(0,0,0,0.02) 9px,
+    rgba(0,0,0,0.02) 10px
+  );
+  pointer-events: none;
+}
+
+/* Swiss noise texture - paper feel */
+@utility minimalist-noise {
+  position: relative;
+}
+
+.minimalist-noise::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Swiss card - strictly rectangular, thick borders */
+@utility minimalist-card {
+  background: #FFFFFF;
+  border: 2px solid #000000;
+  border-radius: 0;
+}
+
+@utility minimalist-card-thick {
+  background: #FFFFFF;
+  border: 4px solid #000000;
+  border-radius: 0;
+}
+
+/* Swiss muted card */
+@utility minimalist-card-muted {
+  background: #F2F2F2;
+  border: 2px solid #000000;
+  border-radius: 0;
+}
+
+/* Swiss button - rectangular, bold, uppercase */
+.minimalist-btn {
+  background: #000000;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0;
+  padding: 1rem 2rem;
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: all 150ms ease-out;
+}
+
+.minimalist-btn:hover {
+  background: #FF3000;
+}
+
+.minimalist-btn:focus-visible {
+  outline: 2px solid #FF3000;
+  outline-offset: 2px;
+}
+
+.minimalist-btn-outline {
+  background: #FFFFFF;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 0;
+  padding: 1rem 2rem;
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: all 150ms ease-out;
+}
+
+.minimalist-btn-outline:hover {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+/* Swiss accent button */
+.minimalist-btn-accent {
+  background: #FF3000;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 0;
+  padding: 1rem 2rem;
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  transition: all 150ms ease-out;
+}
+
+.minimalist-btn-accent:hover {
+  background: #000000;
+}
+
+/* Swiss input - underlined style */
+.minimalist-input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #000000;
+  border-radius: 0;
+  padding: 0.75rem 0;
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-size: 1rem;
+  transition: border-color 150ms ease-out;
+}
+
+.minimalist-input:focus {
+  outline: none;
+  border-bottom-color: #FF3000;
+}
+
+.minimalist-input::placeholder {
+  color: #666666;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+}
+
+/* Swiss typography utilities */
+@utility font-minimalist {
+  font-family: var(--font-inter), Inter, sans-serif;
+}
+
+@utility minimalist-headline {
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+}
+
+@utility minimalist-label {
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-size: 0.625rem;
+}
+
+@utility minimalist-body {
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+/* Swiss section number prefix */
+.minimalist-section-number {
+  color: #FF3000;
+  font-family: var(--font-inter), Inter, sans-serif;
+  font-weight: 700;
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+}
+
+/* Swiss horizontal rule - thick black */
+@utility minimalist-rule {
+  border: none;
+  height: 4px;
+  background-color: #000000;
+  border-radius: 0;
+}
+
+@utility minimalist-rule-thin {
+  border: none;
+  height: 2px;
+  background-color: #000000;
+  border-radius: 0;
+}
+
+/* Swiss hover inversion - instant, mechanical */
+.minimalist-hover-invert {
+  transition: all 150ms ease-out;
+}
+
+.minimalist-hover-invert:hover {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+/* Swiss hover to accent */
+.minimalist-hover-accent {
+  transition: all 150ms ease-out;
+}
+
+.minimalist-hover-accent:hover {
+  background: #FF3000;
+  color: #FFFFFF;
+}
+
+/* Swiss focus states - red ring */
+.minimalist-focus:focus-visible {
+  outline: 2px solid #FF3000;
+  outline-offset: 2px;
+}
+
+/* Swiss geometric shapes */
+.minimalist-circle {
+  border-radius: 50%;
+  border: 2px solid #000000;
+}
+
+.minimalist-circle-accent {
+  border-radius: 50%;
+  background: #FF3000;
+  box-shadow: 0 0 0 8px rgba(255,48,0,0.1);
+}
+
+/* Swiss vertical text */
+@utility minimalist-vertical {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
+/* Swiss asymmetric layout helpers */
+@utility minimalist-offset-left {
+  margin-left: -2rem;
+}
+
+@utility minimalist-offset-right {
+  margin-right: -2rem;
+}
+
+/* Swiss animation - instant, mechanical, snappy */
+@keyframes minimalist-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@utility animate-minimalist-slide {
+  animation: minimalist-slide-up 200ms ease-out forwards;
+}
+
+/* Swiss scale on hover */
+.minimalist-scale:hover {
+  transform: scale(1.05);
+  transition: transform 150ms ease-out;
+}
+
+/* Swiss rotate icon on hover (for plus signs) */
+.minimalist-rotate:hover {
+  transform: rotate(90deg);
+  transition: transform 200ms ease-out;
+}
+
+/* Swiss lift on hover */
+.minimalist-lift:hover {
+  transform: translateY(-1px);
+  transition: transform 150ms ease-out;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .minimalist-btn,
+  .minimalist-btn-outline,
+  .minimalist-btn-accent,
+  .minimalist-hover-invert,
+  .minimalist-hover-accent,
+  .minimalist-scale,
+  .minimalist-rotate,
+  .minimalist-lift,
+  .animate-minimalist-slide {
+    transition: none !important;
+    animation: none !important;
+  }
 }

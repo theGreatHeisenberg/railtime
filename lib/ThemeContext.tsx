@@ -12,7 +12,7 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [themeName, setThemeName] = useState<ThemeName>('dark');
+  const [themeName, setThemeName] = useState<ThemeName>('confetti');
   const [mounted, setMounted] = useState(false);
 
   // Load theme from localStorage on mount
@@ -44,8 +44,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 export function useTheme() {
   const context = useContext(ThemeContext);
   if (context === undefined) {
-    // Return default dark theme when context is not available (e.g., during static generation)
-    return { theme: themes.dark, themeName: 'dark' as ThemeName, setTheme: () => {} };
+    // Return default confetti theme when context is not available (e.g., during static generation)
+    return { theme: themes.confetti, themeName: 'confetti' as ThemeName, setTheme: () => {} };
   }
   return context;
 }

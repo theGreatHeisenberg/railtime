@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Creepster, Mountains_of_Christmas } from "next/font/google";
+import { Geist, Geist_Mono, Creepster, Mountains_of_Christmas, Outfit, Marcellus, Josefin_Sans, Plus_Jakarta_Sans, Kalam, Patrick_Hand, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/ThemeContext";
 
@@ -22,6 +22,54 @@ const creepster = Creepster({
 const mountainsOfChristmas = Mountains_of_Christmas({
   weight: ["400", "700"],
   variable: "--font-mountains",
+  subsets: ["latin"],
+});
+
+const outfit = Outfit({
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-outfit",
+  subsets: ["latin"],
+});
+
+const marcellus = Marcellus({
+  weight: "400",
+  variable: "--font-marcellus",
+  subsets: ["latin"],
+});
+
+const josefinSans = Josefin_Sans({
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-josefin",
+  subsets: ["latin"],
+});
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jakarta",
+  subsets: ["latin"],
+});
+
+const kalam = Kalam({
+  weight: ["400", "700"],
+  variable: "--font-kalam",
+  subsets: ["latin"],
+});
+
+const patrickHand = Patrick_Hand({
+  weight: "400",
+  variable: "--font-patrick-hand",
+  subsets: ["latin"],
+});
+
+const playfairDisplay = Playfair_Display({
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-playfair",
+  subsets: ["latin"],
+});
+
+const sourceSerif4 = Source_Serif_4({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-source-serif",
   subsets: ["latin"],
 });
 
@@ -59,7 +107,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${creepster.variable} ${mountainsOfChristmas.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${creepster.variable} ${mountainsOfChristmas.variable} ${outfit.variable} ${marcellus.variable} ${josefinSans.variable} ${plusJakartaSans.variable} ${kalam.variable} ${patrickHand.variable} ${playfairDisplay.variable} ${sourceSerif4.variable} antialiased`}
       >
         <ThemeProvider>
           {children}
