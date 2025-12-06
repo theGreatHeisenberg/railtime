@@ -130,7 +130,7 @@ export interface StopInfo {
   scheduledTime: string;
   predictedTime: string;
   etaMinutes: number | null;
-  status: 'approaching' | 'boarding' | 'departed' | 'scheduled' | 'passed';
+  status: 'approaching' | 'departed' | 'scheduled' | 'passed';
   delayMinutes: number;
   delayStatus: 'on-time' | 'delayed' | 'early';
 }

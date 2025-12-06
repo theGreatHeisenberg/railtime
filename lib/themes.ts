@@ -69,7 +69,7 @@ export const themes: Record<ThemeName, Theme> = {
     label: '■ Swiss',
     colors: {
       bg: {
-        primary: 'bg-white',
+        primary: 'bg-[#FAFAFA]',
         secondary: 'bg-[#F3F4F6]',
         tertiary: 'bg-[#E5E7EB]',
         card: 'bg-white',

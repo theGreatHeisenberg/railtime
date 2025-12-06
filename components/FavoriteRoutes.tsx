@@ -140,10 +140,15 @@ export default function FavoriteRoutes({
 
   // Theme-aware styles
   const getButtonStyles = (isActive: boolean) => {
+    if (isSwissDark) {
+      return isActive
+        ? "bg-[#E31837] text-white border-[#E31837] shadow-lg"
+        : "bg-[#374151] text-[#F9FAFB] border-[#4B5563] hover:border-[#F87171] hover:text-[#F87171]";
+    }
     if (isSwiss) {
       return isActive
-        ? `bg-[#E31837] text-white border-[#E31837] ${isSwissDark ? "shadow-lg" : ""}`
-        : `bg-white text-[#111827] border-[#E5E7EB] hover:border-[#E31837] hover:text-[#E31837] ${isSwissDark ? "bg-[#374151] text-[#F9FAFB] border-[#4B5563] hover:border-[#F87171] hover:text-[#F87171]" : ""}`;
+        ? "bg-[#E31837] text-white border-[#E31837]"
+        : "bg-white text-[#111827] border-[#E5E7EB] hover:border-[#E31837] hover:text-[#E31837]";
     }
     if (isConfetti) {
       return isActive
@@ -218,8 +223,10 @@ export default function FavoriteRoutes({
               if (e.key === "Escape") setIsAdding(false);
             }}
             className={`flex-1 px-3 py-1.5 text-sm border-2 outline-none ${
-              isSwiss
-                ? `bg-white border-[#E31837] text-[#111827] ${isSwissDark ? "bg-[#374151] text-[#F9FAFB]" : ""}`
+              isSwissDark
+                ? "bg-[#374151] border-[#F87171] text-[#F9FAFB]"
+                : isSwiss
+                ? "bg-white border-[#E31837] text-[#111827]"
                 : isConfetti
                 ? "bg-white border-[#8B5CF6] text-[#1E293B]"
                 : isMinimalist

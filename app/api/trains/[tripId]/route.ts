@@ -98,12 +98,17 @@ function calculateEtaMinutes(timestamp: number): number {
 
 /**
  * Determine stop status based on ETA
+ * 
+ * Simplified timeline (matching Caltrain official site):
+ * - ETA < 0: passed (train has departed this station)
+ * - ETA >= 0: approaching (train is heading to this station)
+ * 
+ * The first non-passed stop is marked as "approaching" (equivalent to Caltrain's "Arriving")
+ * All other future stops are "scheduled"
  */
-function getStopStatus(etaMinutes: number): 'approaching' | 'boarding' | 'departed' | 'scheduled' | 'passed' {
-  if (etaMinutes < -2) return 'passed';
-  if (etaMinutes <= 0) return 'boarding';
-  if (etaMinutes <= 5) return 'approaching';
-  return 'scheduled';
+function getStopStatus(etaMinutes: number): 'approaching' | 'departed' | 'scheduled' | 'passed' {
+  if (etaMinutes < 0) return 'passed';
+  return 'scheduled'; // Will be upgraded to 'approaching' for the first upcoming stop
 }
 
 /**
@@ -163,21 +168,31 @@ function getDetailedPosition(
   }
   
   // Find last passed stop and next stop
+  // A stop is "passed" only after its DEPARTURE time has passed
+  // A stop is "next" if its ARRIVAL time is in the future or very recent (within 1 min)
   const now = Date.now();
   let lastPassedIndex = -1;
+  let nextStopIndex = 0;
   
   for (let i = 0; i < stopTimeUpdates.length; i++) {
-    const stopTime = (stopTimeUpdates[i].Departure?.Time || stopTimeUpdates[i].Arrival?.Time || 0) * 1000;
-    if (stopTime <= now) {
+    const departureTime = (stopTimeUpdates[i].Departure?.Time || stopTimeUpdates[i].Arrival?.Time || 0) * 1000;
+    // Consider a stop "passed" only after departure time + 1 minute buffer
+    if (departureTime + 60000 < now) {
       lastPassedIndex = i;
     } else {
       break;
     }
   }
   
+  // Next stop is the one after the last passed stop
+  nextStopIndex = lastPassedIndex + 1;
+  if (nextStopIndex >= stopTimeUpdates.length) {
+    nextStopIndex = stopTimeUpdates.length - 1; // Last stop
+  }
+  
+  // If no stops have been passed yet, use first stop as both (train hasn't started)
   const lastPassedStop = lastPassedIndex >= 0 ? stopTimeUpdates[lastPassedIndex] : stopTimeUpdates[0];
-  const nextStopIndex = lastPassedIndex + 1;
-  const nextStop = nextStopIndex < stopTimeUpdates.length ? stopTimeUpdates[nextStopIndex] : stopTimeUpdates[stopTimeUpdates.length - 1];
+  const nextStop = stopTimeUpdates[nextStopIndex];
   
   // Calculate progress to next stop
   let progressToNextStop = 0;
@@ -285,8 +300,10 @@ function buildStopTimeline(
       // Real-time data available for this stop
       arrivalTime = realtimeStop.Arrival?.Time || realtimeStop.Departure?.Time || staticStop.timestamp;
       departureTime = realtimeStop.Departure?.Time || realtimeStop.Arrival?.Time || staticStop.timestamp;
-      const etaMinutes = calculateEtaMinutes(arrivalTime);
-      isPassed = etaMinutes < -2;
+      // A stop is "passed" when the train has DEPARTED (not just arrived)
+      // Use departure time to determine if passed
+      const departureEtaMinutes = calculateEtaMinutes(departureTime);
+      isPassed = departureEtaMinutes < 0;
     } else if (!reachedRealtimeSection && staticSchedule.length > 0) {
       // Before real-time section - this stop has been passed
       arrivalTime = staticStop.timestamp;
@@ -296,20 +313,18 @@ function buildStopTimeline(
       // No real-time data and after real-time section started (shouldn't happen often)
       arrivalTime = staticStop.timestamp;
       departureTime = staticStop.timestamp;
-      const etaMinutes = calculateEtaMinutes(arrivalTime);
-      isPassed = etaMinutes < -2;
+      const departureEtaMinutes = calculateEtaMinutes(departureTime);
+      isPassed = departureEtaMinutes < 0;
     }
     
     const etaMinutes = calculateEtaMinutes(arrivalTime);
-    let status = isPassed ? 'passed' : getStopStatus(etaMinutes);
+    let status: 'approaching' | 'departed' | 'scheduled' | 'passed' = isPassed ? 'passed' : 'scheduled';
     
-    // Only allow ONE approaching stop - the first upcoming one
-    if (status === 'approaching') {
-      if (hasApproachingStop) {
-        status = 'scheduled'; // Downgrade subsequent "approaching" to "scheduled"
-      } else {
-        hasApproachingStop = true;
-      }
+    // Mark the FIRST non-passed stop as "approaching" (equivalent to Caltrain's "Arriving")
+    // This matches the official Caltrain website behavior
+    if (!isPassed && !hasApproachingStop) {
+      status = 'approaching';
+      hasApproachingStop = true;
     }
     
     // Determine segment label

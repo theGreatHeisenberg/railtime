@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronUp, MapPin, Clock, Train, ArrowRight, ArrowLeftRight, RefreshCw, Check, ArrowUp, ArrowDown } from "lucide-react";
+import { ChevronDown, ChevronUp, MapPin, Clock, Train, ArrowRight, ArrowLeftRight, RefreshCw, Check, ArrowUp, ArrowDown, Maximize2 } from "lucide-react";
 import stationsData from "@/lib/stations.json";
 import ServiceAlertsBanner from "./ServiceAlertsBanner";
 import LiveStatusBadge from "./LiveStatusBadge";
@@ -147,7 +147,7 @@ function getThemeClasses(themeName: ThemeName) {
   switch (themeName) {
     case "swiss":
       return {
-        bg: "bg-white", text: "text-[#111827]", card: "bg-white",
+        bg: "bg-[#FAFAFA]", text: "text-[#111827]", card: "bg-white",
         cardHover: "hover:scale-[1.02]", muted: "text-[#6B7280]",
         accent: "text-[#E31837]", header: "bg-[#F3F4F6]",
         headerText: "text-[#E31837]", input: "bg-[#F3F4F6]",
@@ -758,6 +758,31 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
           )}
         </div>
         
+        {/* View full details button */}
+        <a
+          href={`/trains/${journey.tripId}`}
+          onClick={(e) => e.stopPropagation()}
+          className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${
+            isConfetti ? 'rounded-lg border-2 border-[#1E293B] hover:bg-[#FBBF24]/20' :
+            isMinimalist ? 'border-2 border-black hover:bg-[#F2F2F2]' :
+            isNapkin ? 'border-2 border-[#2d2d2d] hover:bg-[#e5e0d8]/50' :
+            isSwissDark ? 'rounded-full hover:bg-[#374151]' :
+            isSwiss ? 'rounded-full hover:bg-[#F3F4F6]' :
+            'rounded-full hover:bg-white/10'
+          }`}
+          style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}
+          title="View full train details"
+        >
+          <Maximize2 className={`w-4 h-4 ${
+            isSwissDark ? "text-[#9CA3AF] hover:text-[#F87171]" :
+            isSwiss ? "text-[#6B7280]" :
+            isConfetti ? "text-[#64748B]" :
+            isNapkin ? "text-[#2d2d2d]/60" :
+            isMinimalist ? "text-[#666666]" :
+            "text-[#8A8F98]"
+          }`} />
+        </a>
+        
         {/* Expand/Collapse chevron with rotation animation */}
         <div 
           className={`w-8 h-8 flex items-center justify-center transition-all duration-300 ${
@@ -1041,7 +1066,7 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
                 const isOriginStop = stop.stopName === origin;
                 const isDestStop = stop.stopName === destination;
                 const isPassed = stop.status === 'passed' || stop.status === 'departed';
-                const isCurrent = stop.status === 'boarding' || stop.status === 'approaching';
+                const isCurrent = stop.status === 'approaching';
                 const isLast = idx === allStops.length - 1;
                 
                 const stopAccent = isSwissDark ? "#F87171" : "#E31837";
@@ -1152,6 +1177,7 @@ const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCard
         <button
           onClick={onToggle}
           className={`w-full text-left p-4 transition-all duration-200 ${
+            isSwissDark ? 'hover:bg-[#374151]' :
             isSwiss ? 'hover:bg-[#F3F4F6]' :
             isConfetti ? 'hover:bg-[#FBBF24]/10' :
             isNapkin ? 'hover:bg-[#e5e0d8]/30' :
