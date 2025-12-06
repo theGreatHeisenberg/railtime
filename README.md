@@ -32,7 +32,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/railtime.git
+git clone https://github.com/theGreatHeisenberg/railtime.git
 cd railtime
 
 # Install dependencies
@@ -58,7 +58,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
    git init
    git add .
    git commit -m "Initial commit"
-   git remote add origin https://github.com/yourusername/railtime.git
+   git remote add origin https://github.com/theGreatHeisenberg/railtime.git
    git push -u origin main
    ```
 
@@ -302,8 +302,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 📮 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/railtime/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/railtime/discussions)
+- **Issues**: [GitHub Issues](https://github.com/theGreatHeisenberg/railtime/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/theGreatHeisenberg/railtime/discussions)
 
 ---
 
@@ -328,4 +328,4 @@ RailTime is an independent application and is not affiliated with, endorsed by, 
 
 **Built with ❤️ for the Caltrain community**
 
-[⭐ Star this repo](https://github.com/yourusername/railtime) if you find it useful!
+[⭐ Star this repo](https://github.com/theGreatHeisenberg/railtime) if you find it useful!

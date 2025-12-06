@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Journey, JourneySearchResponse, DataSource, Station, StopTimeline, TrainDetailsResponse } from "@/lib/types";
 import {
   Select,
@@ -1230,6 +1231,11 @@ export default function CleanJourneyView() {
   const isConfetti = themeName === "confetti";
   const isMinimalist = themeName === "minimalist";
   
+  // URL state management
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const isInitializedRef = useRef(false);
+  
   const [origin, setOrigin] = useState<string>("");
   const [destination, setDestination] = useState<string>("");
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -1269,6 +1275,19 @@ export default function CleanJourneyView() {
     setFeedbackVisible(true);
     setTimeout(() => setFeedbackVisible(false), 2000);
   }, []);
+  
+  // Sync state to URL (without triggering navigation)
+  const updateURL = useCallback((newOrigin: string, newDest: string, newMode: TimeFilterModeOption, newTime: Date) => {
+    const params = new URLSearchParams();
+    if (newOrigin) params.set('from', newOrigin);
+    if (newDest) params.set('to', newDest);
+    if (newMode !== 'depart_now') {
+      params.set('mode', newMode);
+      params.set('time', newTime.toISOString());
+    }
+    const newURL = params.toString() ? `?${params.toString()}` : '/';
+    router.replace(newURL, { scroll: false });
+  }, [router]);
 
   
   // Handle accordion toggle - only one card expanded at a time
@@ -1309,22 +1328,79 @@ export default function CleanJourneyView() {
     setVisibleTrainsCount(INITIAL_TRAINS_COUNT);
   }, [origin, destination, timeFilterMode]);
 
-  // Load saved preferences
+  // Load from URL params first, then localStorage, then defaults
   useEffect(() => {
-    const savedOrigin = localStorage.getItem("selectedOrigin");
-    const savedDest = localStorage.getItem("selectedDestination");
-    if (savedOrigin && stations.find(s => s.stopname === savedOrigin)) setOrigin(savedOrigin);
-    else if (stations.find(s => s.stopname === "Sunnyvale")) setOrigin("Sunnyvale");
-    else if (stations.length > 0) setOrigin(stations[0].stopname);
+    if (isInitializedRef.current) return;
+    isInitializedRef.current = true;
     
-    if (savedDest && savedDest !== "All" && stations.find(s => s.stopname === savedDest)) setDestination(savedDest);
-    else if (stations.find(s => s.stopname === "Palo Alto")) setDestination("Palo Alto");
-    else if (stations.find(s => s.stopname === "San Francisco")) setDestination("San Francisco");
-    else if (stations.length > 1) setDestination(stations[stations.length - 1].stopname);
-  }, []);
+    // Read from URL params
+    const urlOrigin = searchParams.get('from');
+    const urlDest = searchParams.get('to');
+    const urlMode = searchParams.get('mode') as TimeFilterModeOption | null;
+    const urlTime = searchParams.get('time');
+    
+    // Determine origin: URL > localStorage > default (Sunnyvale)
+    let newOrigin = "";
+    if (urlOrigin && stations.find(s => s.stopname === urlOrigin)) {
+      newOrigin = urlOrigin;
+    } else {
+      const savedOrigin = localStorage.getItem("selectedOrigin");
+      if (savedOrigin && stations.find(s => s.stopname === savedOrigin)) {
+        newOrigin = savedOrigin;
+      } else if (stations.find(s => s.stopname === "Sunnyvale")) {
+        newOrigin = "Sunnyvale";
+      } else if (stations.length > 0) {
+        newOrigin = stations[0].stopname;
+      }
+    }
+    
+    // Determine destination: URL > localStorage > default (Palo Alto)
+    let newDest = "";
+    if (urlDest && stations.find(s => s.stopname === urlDest)) {
+      newDest = urlDest;
+    } else {
+      const savedDest = localStorage.getItem("selectedDestination");
+      if (savedDest && savedDest !== "All" && stations.find(s => s.stopname === savedDest)) {
+        newDest = savedDest;
+      } else if (stations.find(s => s.stopname === "Palo Alto")) {
+        newDest = "Palo Alto";
+      } else if (stations.find(s => s.stopname === "San Francisco")) {
+        newDest = "San Francisco";
+      } else if (stations.length > 1) {
+        newDest = stations[stations.length - 1].stopname;
+      }
+    }
+    
+    // Set time filter from URL
+    if (urlMode && ['depart_now', 'leave_by', 'arrive_by'].includes(urlMode)) {
+      setTimeFilterMode(urlMode);
+      if (urlTime) {
+        const parsedTime = new Date(urlTime);
+        if (!isNaN(parsedTime.getTime())) {
+          setTargetTime(parsedTime);
+        }
+      }
+    }
+    
+    setOrigin(newOrigin);
+    setDestination(newDest);
+  }, [searchParams]);
 
-  useEffect(() => { if (origin) localStorage.setItem("selectedOrigin", origin); }, [origin]);
-  useEffect(() => { if (destination) localStorage.setItem("selectedDestination", destination); }, [destination]);
+  // Save to localStorage and update URL when origin/destination changes
+  useEffect(() => { 
+    if (origin) {
+      localStorage.setItem("selectedOrigin", origin);
+      if (isInitializedRef.current && destination) {
+        updateURL(origin, destination, timeFilterMode, targetTime);
+      }
+    }
+  }, [origin, destination, timeFilterMode, targetTime, updateURL]);
+  
+  useEffect(() => { 
+    if (destination) {
+      localStorage.setItem("selectedDestination", destination);
+    }
+  }, [destination]);
 
 
   const expandedJourneyIdRef = useRef<string | null>(null);

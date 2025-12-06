@@ -2,7 +2,7 @@
 
 import { useTheme } from "@/lib/ThemeContext";
 import { ThemeName } from "@/lib/themes";
-import { Github, Coffee, Heart } from "lucide-react";
+import { Github, Heart } from "lucide-react";
 
 function getFooterClasses(themeName: ThemeName) {
   switch (themeName) {
@@ -109,29 +109,18 @@ export default function Footer() {
               <span>for Caltrain riders</span>
             </div>
 
-            {/* Center: Links */}
+            {/* Right: Links */}
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/panhalsern/caltrain-live"
+                href="https://github.com/theGreatHeisenberg/railtime"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-[#8B5CF6] hover:text-[#F472B6] transition-colors font-medium"
+                className="flex items-center gap-1.5 px-4 py-2 bg-[#8B5CF6] text-white font-bold text-xs rounded-full border-2 border-[#1E293B] shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[4px_4px_0px_0px_#1E293B] hover:-translate-y-0.5 active:shadow-[1px_1px_0px_0px_#1E293B] active:translate-y-0.5 transition-all playful-bounce"
               >
-                <Github className="w-4 h-4" strokeWidth={2.5} />
+                <Github className="w-3.5 h-3.5" strokeWidth={2.5} />
                 <span>GitHub</span>
               </a>
             </div>
-
-            {/* Right: Buy Me a Coffee */}
-            <a
-              href="https://buymeacoffee.com/panhalsern"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#8B5CF6] text-white font-bold text-xs rounded-full border-2 border-[#1E293B] shadow-[3px_3px_0px_0px_#1E293B] hover:shadow-[4px_4px_0px_0px_#1E293B] hover:-translate-y-0.5 active:shadow-[1px_1px_0px_0px_#1E293B] active:translate-y-0.5 transition-all playful-bounce"
-            >
-              <Coffee className="w-3.5 h-3.5" strokeWidth={2.5} />
-              <span>Buy me a coffee</span>
-            </a>
           </div>
 
           {/* Legal Disclaimer */}
@@ -182,29 +171,18 @@ export default function Footer() {
               <span>for Caltrain riders</span>
             </div>
 
-            {/* Center: Links */}
+            {/* Right: Links */}
             <div className="flex items-center gap-4">
               <a
-                href="https://github.com/panhalsern/caltrain-live"
+                href="https://github.com/theGreatHeisenberg/railtime"
                 target="_blank"
                 rel="noopener noreferrer"
-                className={`flex items-center gap-2 text-sm ${classes.link} transition-colors`}
+                className={classes.button + " flex items-center gap-2 px-5 py-2.5 font-medium text-sm"}
               >
-                <Github className="w-5 h-5" strokeWidth={2} />
+                <Github className="w-4 h-4" strokeWidth={2} />
                 <span>GitHub</span>
               </a>
             </div>
-
-            {/* Right: Buy Me a Coffee */}
-            <a
-              href="https://buymeacoffee.com/panhalsern"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={classes.button + " flex items-center gap-2 px-5 py-2.5 font-medium text-sm"}
-            >
-              <Coffee className="w-4 h-4" strokeWidth={2} />
-              <span>Buy me a coffee</span>
-            </a>
           </div>
 
           {/* Legal Disclaimer */}
@@ -237,29 +215,18 @@ export default function Footer() {
           <span>for Caltrain riders</span>
         </div>
 
-        {/* Center: Links */}
+        {/* Right: Links */}
         <div className="flex items-center gap-4">
           <a
-            href="https://github.com/panhalsern/caltrain-live"
+            href="https://github.com/theGreatHeisenberg/railtime"
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-center gap-1.5 text-xs ${classes.link} transition-colors`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${classes.button} transition-colors`}
           >
-            <Github className="w-4 h-4" />
+            <Github className="w-3.5 h-3.5" />
             <span>GitHub</span>
           </a>
         </div>
-
-        {/* Right: Buy Me a Coffee */}
-        <a
-          href="https://buymeacoffee.com/panhalsern"
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${classes.button} transition-colors`}
-        >
-          <Coffee className="w-3.5 h-3.5" />
-          <span>Buy me a coffee</span>
-        </a>
       </div>
 
       {/* Legal Disclaimer */}
