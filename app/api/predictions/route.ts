@@ -4,6 +4,7 @@ import scheduleData from '@/lib/schedule-data.json';
 import tripStopsData from '@/lib/trip-stops-data.json';
 import { CaltrainResponse, TrainPrediction } from '@/lib/types';
 import { differenceInMinutes, format } from 'date-fns';
+import { formatMinutesAsTime, getTimestampForMinutes } from '@/lib/staticScheduleGenerator';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
 
         const json: CaltrainResponse = await response.json();
         const predictions: TrainPrediction[] = [];
-        const schedule = scheduleData as Record<string, Record<string, string>>;
+        const schedule = scheduleData as Record<string, Record<string, number>>;
         const tripStops = tripStopsData as Record<string, string[]>;
 
         json.data.forEach((entry) => {
@@ -78,19 +79,9 @@ export async function GET(request: NextRequest) {
                         trainType = "Bullet";
                     }
 
-                    // Look up scheduled time
-                    // We need to handle the fact that GTFS trip IDs might have suffixes or prefixes in some systems,
-                    // but usually Caltrain GTFS Realtime TripId matches the Static GTFS TripId.
-                    // However, sometimes Realtime has "113" and Static has "113" or "113-2023...".
-                    // Our schedule-data.json keys are simple IDs like "113".
-                    // Let's try exact match first.
+                    // Look up scheduled time (in minutes since midnight)
+                    const scheduledMinutes = schedule[trainNumber]?.[stopId];
 
-                    let scheduledTime = schedule[trainNumber]?.[stopId];
-
-                    // Fallback: The API might return "ScheduledTime" if we wanted to trust it, but we want our static data.
-                    // If not found, we can try to strip non-numeric characters if needed, but for now exact match.
-
-                    // If we found a scheduled time, use it. Otherwise, fallback to predicted time (formatted).
                     // Format time in Pacific timezone
                     const options: Intl.DateTimeFormatOptions = {
                         hour: 'numeric',
@@ -99,24 +90,20 @@ export async function GET(request: NextRequest) {
                         timeZone: 'America/Los_Angeles'
                     };
                     const predictedTimeStr = date.toLocaleTimeString('en-US', options);
-                    if (!scheduledTime) {
-                        scheduledTime = predictedTimeStr;
-                    }
+
+                    // Convert scheduled minutes to readable time string
+                    const scheduledTime = scheduledMinutes !== undefined
+                        ? formatMinutesAsTime(scheduledMinutes)
+                        : predictedTimeStr;
 
                     // Calculate delay by comparing predicted vs scheduled time
                     let delayMinutes: number | undefined = undefined;
                     let delayStatus: "on-time" | "early" | "delayed" | undefined = undefined;
 
-                    if (scheduledTime && scheduledTime !== predictedTimeStr) {
+                    if (scheduledMinutes !== undefined) {
                         try {
-                            // Parse scheduled time (e.g., "8:15 AM")
-                            const scheduledDate = new Date();
-                            const [time, period] = scheduledTime.split(' ');
-                            const [hours, minutes] = time.split(':').map(Number);
-                            let adjustedHours = hours;
-                            if (period === 'PM' && hours !== 12) adjustedHours += 12;
-                            if (period === 'AM' && hours === 12) adjustedHours = 0;
-                            scheduledDate.setHours(adjustedHours, minutes, 0, 0);
+                            // Convert scheduled minutes to a Date object
+                            const scheduledDate = getTimestampForMinutes(scheduledMinutes);
 
                             // Calculate difference in minutes
                             delayMinutes = differenceInMinutes(date, scheduledDate);
