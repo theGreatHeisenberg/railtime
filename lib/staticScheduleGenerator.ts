@@ -29,20 +29,23 @@ const tripStops = tripStopsData as TripStopsData;
 const stations = stationsData as Station[];
 
 /**
- * Parse a time string like "8:15 AM" into a Date object for today
+ * Parse a time string like "8:15 AM" into a Date object for today in Pacific Time
+ * Uses Pacific timezone to ensure consistency across different deployment environments
  */
 export function parseTimeString(timeStr: string): Date {
-  const now = new Date();
+  // Get current time in Pacific timezone
+  const nowPacific = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
   const [time, period] = timeStr.split(' ');
   const [hours, minutes] = time.split(':').map(Number);
-  
+
   let adjustedHours = hours;
   if (period === 'PM' && hours !== 12) adjustedHours += 12;
   if (period === 'AM' && hours === 12) adjustedHours = 0;
-  
-  const result = new Date(now);
+
+  // Create date in Pacific timezone
+  const result = new Date(nowPacific);
   result.setHours(adjustedHours, minutes, 0, 0);
-  
+
   return result;
 }
 
