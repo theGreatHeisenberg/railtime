@@ -24,20 +24,20 @@ const buildSchedule = async () => {
         skipEmptyLines: true,
     });
 
-    const schedule: Record<string, Record<string, string>> = {};
+    const schedule: Record<string, Record<string, number>> = {};
     const tripStops: Record<string, string[]> = {};
 
     (data as StopTime[]).forEach((row) => {
         const tripId = row.trip_id;
         const stopId = row.stop_id;
 
-        // Build schedule mapping (trip_id -> stop_id -> formatted_time)
+        // Build schedule mapping (trip_id -> stop_id -> minutes_since_midnight)
         if (!schedule[tripId]) {
             schedule[tripId] = {};
         }
-        // Convert HH:MM:SS to h:mm a (e.g., 14:30:00 -> 2:30 PM)
-        // Note: GTFS times can be > 24:00:00 for late night trains
-        schedule[tripId][stopId] = formatGtfsTime(row.departure_time);
+        // Convert HH:MM:SS to minutes since midnight (e.g., 14:30:00 -> 870)
+        // Note: GTFS times can be > 24:00:00 for late night trains (e.g., 25:00 -> 1500)
+        schedule[tripId][stopId] = gtfsTimeToMinutes(row.departure_time);
 
         // Build trip stops mapping (trip_id -> array of stop_ids in sequence)
         if (!tripStops[tripId]) {
@@ -56,18 +56,17 @@ const buildSchedule = async () => {
 
 };
 
-function formatGtfsTime(timeStr: string): string {
-    if (!timeStr) return '';
+/**
+ * Convert GTFS time string to minutes since midnight
+ * Examples:
+ *   "06:00:00" -> 360 (6 * 60)
+ *   "14:30:00" -> 870 (14 * 60 + 30)
+ *   "25:00:00" -> 1500 (25 * 60) - late night trains next day
+ */
+function gtfsTimeToMinutes(timeStr: string): number {
+    if (!timeStr) return 0;
     const [h, m] = timeStr.split(':').map(Number);
-
-    // Handle > 24h times (e.g. 25:00 is 1:00 AM next day)
-    const normalizedH = h % 24;
-
-    const ampm = normalizedH >= 12 ? 'PM' : 'AM';
-    const displayH = normalizedH % 12 || 12; // 0 -> 12
-    const displayM = m.toString().padStart(2, '0');
-
-    return `${displayH}:${displayM} ${ampm}`;
+    return h * 60 + m;
 }
 
 buildSchedule();

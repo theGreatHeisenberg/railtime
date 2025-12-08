@@ -7,6 +7,7 @@
  * Requirements: 6.1, 6.2
  */
 
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import scheduleData from './schedule-data.json';
 import tripStopsData from './trip-stops-data.json';
 import stationsData from './stations.json';
@@ -21,7 +22,7 @@ import {
 } from './types';
 
 // Type definitions for static data
-type ScheduleData = Record<string, Record<string, string>>;
+type ScheduleData = Record<string, Record<string, number>>; // stopId -> minutes since midnight
 type TripStopsData = Record<string, string[]>;
 
 const schedule = scheduleData as ScheduleData;
@@ -29,24 +30,54 @@ const tripStops = tripStopsData as TripStopsData;
 const stations = stationsData as Station[];
 
 /**
- * Parse a time string like "8:15 AM" into a Date object for today in Pacific Time
- * Uses Pacific timezone to ensure consistency across different deployment environments
+ * Convert minutes since midnight to a Date object for today in Pacific Time
+ * Uses date-fns-tz for proper timezone handling that works in all environments
+ *
+ * @param minutesSinceMidnight - Minutes since midnight (0-1439 for same day, >1440 for next day)
+ * @returns Date object in UTC representing the time in Pacific timezone
+ *
+ * Examples:
+ *   360 (6:00 AM) -> Date for 6:00 AM today in Pacific Time
+ *   870 (2:30 PM) -> Date for 2:30 PM today in Pacific Time
+ *   1500 (25:00) -> Date for 1:00 AM tomorrow in Pacific Time
  */
-export function parseTimeString(timeStr: string): Date {
-  // Get current time in Pacific timezone
-  const nowPacific = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }));
-  const [time, period] = timeStr.split(' ');
-  const [hours, minutes] = time.split(':').map(Number);
+export function getTimestampForMinutes(minutesSinceMidnight: number): Date {
+  // Get what "today" is in Pacific Time
+  const nowInPacific = toZonedTime(new Date(), 'America/Los_Angeles');
 
-  let adjustedHours = hours;
-  if (period === 'PM' && hours !== 12) adjustedHours += 12;
-  if (period === 'AM' && hours === 12) adjustedHours = 0;
+  // Build the target time for today in Pacific timezone
+  const pacificYear = nowInPacific.getFullYear();
+  const pacificMonth = nowInPacific.getMonth();
+  const pacificDate = nowInPacific.getDate();
 
-  // Create date in Pacific timezone
-  const result = new Date(nowPacific);
-  result.setHours(adjustedHours, minutes, 0, 0);
+  const hours = Math.floor(minutesSinceMidnight / 60);
+  const minutes = minutesSinceMidnight % 60;
 
-  return result;
+  // Create a Date object representing this time in Pacific timezone
+  const localDate = new Date(pacificYear, pacificMonth, pacificDate, hours, minutes, 0, 0);
+
+  // Convert from Pacific Time to UTC
+  // This works consistently regardless of the server's timezone (local, Cloudflare, EST, etc.)
+  return fromZonedTime(localDate, 'America/Los_Angeles');
+}
+
+/**
+ * Format minutes since midnight as a human-readable time string
+ *
+ * @param minutesSinceMidnight - Minutes since midnight
+ * @returns Formatted time string (e.g., "6:00 AM", "2:30 PM")
+ */
+export function formatMinutesAsTime(minutesSinceMidnight: number): string {
+  const hours = Math.floor(minutesSinceMidnight / 60);
+  const minutes = minutesSinceMidnight % 60;
+
+  // Normalize for display (25:00 -> 1:00 AM next day)
+  const normalizedHours = hours % 24;
+  const period = normalizedHours >= 12 ? 'PM' : 'AM';
+  const displayHours = normalizedHours % 12 || 12;
+  const displayMinutes = minutes.toString().padStart(2, '0');
+
+  return `${displayHours}:${displayMinutes} ${period}`;
 }
 
 /**
@@ -183,10 +214,10 @@ export function generateTripsFromStaticSchedule(
     let firstStopId = tripStopIds[0];
     
     for (const stopId of tripStopIds) {
-      const timeStr = stopTimes[stopId];
-      if (!timeStr) continue;
-      
-      const stopTime = parseTimeString(timeStr);
+      const minutesSinceMidnight = stopTimes[stopId];
+      if (minutesSinceMidnight === undefined) continue;
+
+      const stopTime = getTimestampForMinutes(minutesSinceMidnight);
       const timestamp = Math.floor(stopTime.getTime() / 1000);
       
       // Check if this stop is within our time window
@@ -257,10 +288,10 @@ export function estimatePositionFromSchedule(
   let nextStop: { stopId: string; time: Date } | null = null;
   
   for (const stopId of tripStopIds) {
-    const timeStr = tripSchedule[stopId];
-    if (!timeStr) continue;
-    
-    const stopTime = parseTimeString(timeStr);
+    const minutesSinceMidnight = tripSchedule[stopId];
+    if (minutesSinceMidnight === undefined) continue;
+
+    const stopTime = getTimestampForMinutes(minutesSinceMidnight);
     
     if (stopTime <= currentTime) {
       previousStop = { stopId, time: stopTime };
@@ -343,9 +374,9 @@ export function getTripStopIds(tripId: string): string[] {
 }
 
 /**
- * Get scheduled time for a stop on a trip
+ * Get scheduled time for a stop on a trip (in minutes since midnight)
  */
-export function getScheduledTime(tripId: string, stopId: string): string | undefined {
+export function getScheduledTime(tripId: string, stopId: string): number | undefined {
   return schedule[tripId]?.[stopId];
 }
 
@@ -368,18 +399,19 @@ export function getFullTripSchedule(tripId: string): Array<{ stopId: string; sch
   const tripSchedule = schedule[tripId] || schedule[normalizedId] || schedule[`M${normalizedId}`] || {};
   
   const result: Array<{ stopId: string; scheduledTime: string; timestamp: number }> = [];
-  
+
   for (const stopId of stopIds) {
-    const timeStr = tripSchedule[stopId];
-    if (timeStr) {
-      const time = parseTimeString(timeStr);
+    const minutesSinceMidnight = tripSchedule[stopId];
+    if (minutesSinceMidnight !== undefined) {
+      const time = getTimestampForMinutes(minutesSinceMidnight);
+      const scheduledTime = formatMinutesAsTime(minutesSinceMidnight);
       result.push({
         stopId,
-        scheduledTime: timeStr,
+        scheduledTime,
         timestamp: Math.floor(time.getTime() / 1000),
       });
     }
   }
-  
+
   return result;
 }
