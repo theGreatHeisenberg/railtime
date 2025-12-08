@@ -262,11 +262,11 @@ export default function ServiceAlertsBanner({
       {/* Alert Button with Badge */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`relative p-2 rounded-lg border ${theme.colors.ui.border} ${theme.colors.bg.card} hover:${theme.colors.ui.hover} transition-colors`}
+        className={`relative p-2 rounded-lg border ${theme.classes.border} ${theme.classes.card} transition-colors`}
         aria-label={`${alerts.length} service alert${alerts.length !== 1 ? 's' : ''}`}
         title={`${alerts.length} service alert${alerts.length !== 1 ? 's' : ''}`}
       >
-        <Megaphone className={`w-5 h-5 ${theme.colors.text.secondary}`} />
+        <Megaphone className={`w-5 h-5 ${theme.classes.textSecondary}`} />
         {/* Badge */}
         <span className={`absolute -top-1 -right-1 ${getBadgeColor()} text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1`}>
           {alerts.length}
@@ -303,7 +303,7 @@ export default function ServiceAlertsBanner({
               ? "bg-white border-2 border-[#1E293B] rounded-2xl shadow-[8px_8px_0px_0px_#E2E8F0]"
               : isMinimalist
               ? "bg-white border-4 border-black"
-              : `rounded-lg border ${theme.colors.ui.border} ${theme.colors.bg.primary} shadow-2xl`
+              : `rounded-lg border ${theme.classes.border} ${theme.classes.container} shadow-2xl`
           }`}
           style={isMinimalist ? { borderRadius: 0 } : undefined}
           onClick={(e) => e.stopPropagation()}
@@ -322,17 +322,17 @@ export default function ServiceAlertsBanner({
               ? "border-b-2 border-[#E2E8F0] bg-white"
               : isMinimalist
               ? "border-b-4 border-black bg-[#F2F2F2]"
-              : `border-b ${theme.colors.ui.divider}`
+              : `border-b ${theme.classes.divider}`
           }`}>
             <div className="flex items-center gap-2">
-              <Megaphone className={`w-5 h-5 ${isSwiss ? (isSwissDark ? "text-[#60A5FA]" : "text-[#3B82F6]") : isObsidian ? "text-[#5E6AD2]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#FF3000]" : isConfetti ? "text-[#8B5CF6]" : theme.colors.text.accent}`} strokeWidth={isSwiss ? 2 : isConfetti ? 2.5 : isNapkin ? 2.5 : isMinimalist ? 2 : 2} />
-              <h2 className={`font-bold ${isSwiss ? (isSwissDark ? "text-[#F9FAFB] font-semibold" : "text-[#111827] font-semibold") : isObsidian ? "text-[#EDEDEF] font-medium" : isNapkin ? "text-[#2d2d2d] font-bold font-[var(--font-kalam)]" : isMinimalist ? "text-black font-bold uppercase tracking-widest" : isConfetti ? "text-[#1E293B] font-bold" : theme.colors.text.primary}`}>
+              <Megaphone className={`w-5 h-5 ${isSwiss ? (isSwissDark ? "text-[#60A5FA]" : "text-[#3B82F6]") : isObsidian ? "text-[#5E6AD2]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#FF3000]" : isConfetti ? "text-[#8B5CF6]" : theme.classes.textAccent}`} strokeWidth={isSwiss ? 2 : isConfetti ? 2.5 : isNapkin ? 2.5 : isMinimalist ? 2 : 2} />
+              <h2 className={`font-bold ${isSwiss ? (isSwissDark ? "text-[#F9FAFB] font-semibold" : "text-[#111827] font-semibold") : isObsidian ? "text-[#EDEDEF] font-medium" : isNapkin ? "text-[#2d2d2d] font-bold font-[var(--font-kalam)]" : isMinimalist ? "text-black font-bold uppercase tracking-widest" : isConfetti ? "text-[#1E293B] font-bold" : theme.classes.textPrimary}`}>
                 Service Alerts ({alerts.length})
               </h2>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className={`p-1 ${isSwiss ? (isSwissDark ? "rounded-md text-[#9CA3AF] hover:bg-[#374151] hover:text-[#F9FAFB] transition-all" : "rounded-md text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827] transition-all") : isObsidian ? "rounded-md hover:bg-white/[0.08] text-[#8A8F98]" : isNapkin ? "border-2 border-[#2d2d2d] text-[#2d2d2d] hover:bg-[#e5e0d8] shadow-[2px_2px_0px_0px_#2d2d2d] hover:shadow-[1px_1px_0px_0px_#2d2d2d] transition-all duration-100" : isMinimalist ? "border-2 border-black text-black hover:bg-[#FF3000] hover:border-[#FF3000] hover:text-white transition-all duration-150" : isConfetti ? "rounded-lg border-2 border-[#1E293B] text-[#1E293B] hover:bg-[#FBBF24] shadow-[2px_2px_0px_0px_#1E293B] hover:shadow-[3px_3px_0px_0px_#1E293B] transition-all" : `rounded hover:${theme.colors.ui.hover} ${theme.colors.text.muted}`}`}
+              className={`p-1 ${isSwiss ? (isSwissDark ? "rounded-md text-[#9CA3AF] hover:bg-[#374151] hover:text-[#F9FAFB] transition-all" : "rounded-md text-[#6B7280] hover:bg-[#E5E7EB] hover:text-[#111827] transition-all") : isObsidian ? "rounded-md hover:bg-white/[0.08] text-[#8A8F98]" : isNapkin ? "border-2 border-[#2d2d2d] text-[#2d2d2d] hover:bg-[#e5e0d8] shadow-[2px_2px_0px_0px_#2d2d2d] hover:shadow-[1px_1px_0px_0px_#2d2d2d] transition-all duration-100" : isMinimalist ? "border-2 border-black text-black hover:bg-[#FF3000] hover:border-[#FF3000] hover:text-white transition-all duration-150" : isConfetti ? "rounded-lg border-2 border-[#1E293B] text-[#1E293B] hover:bg-[#FBBF24] shadow-[2px_2px_0px_0px_#1E293B] hover:shadow-[3px_3px_0px_0px_#1E293B] transition-all" : `rounded hover:${theme.classes.cardHover} ${theme.classes.textMuted}`}`}
               style={isMinimalist ? { borderRadius: 0 } : undefined}
               aria-label="Close"
             >
@@ -548,11 +548,11 @@ export default function ServiceAlertsBanner({
                           {alert.title}
                         </div>
                       )}
-                      <div className={`text-xs ${theme.colors.text.muted} mt-0.5`}>
+                      <div className={`text-xs ${theme.classes.textMuted} mt-0.5`}>
                         {alert.description}
                       </div>
                       {alert.affectedStations && alert.affectedStations.length > 0 && (
-                        <div className={`text-[10px] ${theme.colors.text.muted} mt-1 opacity-70`}>
+                        <div className={`text-[10px] ${theme.classes.textMuted} mt-1 opacity-70`}>
                           Affected: {alert.affectedStations.join(', ')}
                         </div>
                       )}
@@ -577,9 +577,9 @@ export default function ServiceAlertsBanner({
               ? "border-t-2 border-[#E2E8F0] bg-white"
               : isMinimalist
               ? "border-t-2 border-black bg-[#F2F2F2]"
-              : `border-t ${theme.colors.ui.divider}`
+              : `border-t ${theme.classes.divider}`
           }`}>
-            <span className={`text-xs ${isSwiss ? (isSwissDark ? "text-[#9CA3AF]" : "text-[#6B7280]") : isObsidian ? "text-[#8A8F98]" : isNapkin ? "text-[#2d2d2d]/60 font-[var(--font-patrick-hand)]" : isMinimalist ? "text-[#666666] uppercase tracking-widest font-bold" : isConfetti ? "font-medium text-[#64748B]" : theme.colors.text.muted}`}>
+            <span className={`text-xs ${isSwiss ? (isSwissDark ? "text-[#9CA3AF]" : "text-[#6B7280]") : isObsidian ? "text-[#8A8F98]" : isNapkin ? "text-[#2d2d2d]/60 font-[var(--font-patrick-hand)]" : isMinimalist ? "text-[#666666] uppercase tracking-widest font-bold" : isConfetti ? "font-medium text-[#64748B]" : theme.classes.textMuted}`}>
               Auto-refreshes every minute
             </span>
           </div>

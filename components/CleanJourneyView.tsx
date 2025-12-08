@@ -15,115 +15,20 @@ import stationsData from "@/lib/stations.json";
 import ServiceAlertsBanner from "./ServiceAlertsBanner";
 import LiveStatusBadge from "./LiveStatusBadge";
 import JourneyThemeSwitcher from "./JourneyThemeSwitcher";
-
 import Footer from "./Footer";
 import { useTheme } from "@/lib/ThemeContext";
-import { ThemeName } from "@/lib/themes";
+import { getTrainTypeStyle } from "@/lib/themes";
 import TimeFilterSelector, { TimeFilterModeOption } from "./TimeFilterSelector";
 import TimePicker from "./TimePicker";
 import { getNextHourRoundedUp } from "@/lib/timeFilterUtils";
 import FavoriteRoutes from "./FavoriteRoutes";
+import { ActionFeedback, JourneyHeader, TrainTypeFilter } from "./journey";
 
-// Clarity-First UX: Action Feedback Toast Component
-interface ActionFeedbackProps {
-  message: string | null;
-  visible: boolean;
-  themeName: ThemeName;
-}
-
-function ActionFeedback({ message, visible, themeName }: ActionFeedbackProps) {
-  const isConfetti = themeName === 'confetti';
-  const isDark = themeName === 'obsidian' || themeName === 'swiss-dark';
-  
-  const getBgColor = () => {
-    if (themeName === 'swiss') return '#FFFFFF';
-    if (themeName === 'swiss-dark') return '#1F2937';
-    if (themeName === 'confetti') return '#FFFFFF';
-    if (themeName === 'obsidian') return '#0a0a0c';
-    if (themeName === 'napkin') return '#fdfbf7';
-    if (themeName === 'minimalist') return '#FFFFFF';
-    return '#FFFFFF';
-  };
-  
-  const getTextColor = () => {
-    if (isDark) return '#FFFFFF';
-    return '#0F172A';
-  };
-  
-  const getAccentColor = () => {
-    if (themeName === 'swiss') return '#10B981';
-    if (themeName === 'swiss-dark') return '#34D399';
-    if (themeName === 'confetti') return '#34D399';
-    if (themeName === 'obsidian') return '#34D399';
-    if (themeName === 'napkin') return '#ff4d4d';
-    if (themeName === 'minimalist') return '#FF3000';
-    return '#22C55E';
-  };
-  
-  return (
-    <div 
-      className="fixed top-20 left-1/2 z-50 transition-all duration-300 pointer-events-none"
-      style={{
-        opacity: visible ? 1 : 0,
-        transform: `translateX(-50%) translateY(${visible ? '0' : '-10px'})`,
-      }}
-    >
-      <div 
-        className={`flex items-center gap-2 px-4 py-2 ${isConfetti ? 'rounded-xl border-2 shadow-[3px_3px_0px_0px_#1E293B]' : 'rounded-lg shadow-lg'}`}
-        style={{
-          backgroundColor: getBgColor(),
-          borderColor: isConfetti ? '#1E293B' : 'transparent',
-        }}
-      >
-        <Check className="w-4 h-4" style={{ color: getAccentColor() }} />
-        <span className="text-sm font-medium" style={{ color: getTextColor() }}>
-          {message}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// Pagination constants for incremental loading
+// Pagination constants
 const INITIAL_TRAINS_COUNT = 4;
 const LOAD_MORE_COUNT = 3;
 
 const stations = stationsData as Station[];
-
-// Swiss Design System Constants (Caltrain Red Theme)
-const FLAT = {
-  primary: "#E31837",
-  secondary: "#22C55E",
-  accent: "#F59E0B",
-  foreground: "#111827",
-  background: "#FFFFFF",
-  muted: "#F3F4F6",
-  border: "#E5E7EB",
-};
-
-// Sketch/Hand-Drawn Design System Constants
-const SKETCH = {
-  paper: "#fdfbf7",
-  pencil: "#2d2d2d",
-  muted: "#e5e0d8",
-  accent: "#ff4d4d",
-  blue: "#2d5da1",
-  postit: "#fff9c4",
-  wobbly: "255px 15px 225px 15px / 15px 225px 15px 255px",
-  wobblyMd: "95px 4px 97px 5px / 4px 95px 6px 95px",
-  wobblySm: "40px 8px 45px 6px / 8px 42px 7px 40px",
-};
-
-// Playful Geometric Design System Constants
-const PLAYFUL = {
-  cream: "#FFFDF5",
-  slate: "#1E293B",
-  violet: "#8B5CF6",
-  pink: "#F472B6",
-  amber: "#FBBF24",
-  mint: "#34D399",
-  muted: "#64748B",
-};
 
 // Station abbreviations for compact display
 const STATION_ABBREVIATIONS: Record<string, string> = {
@@ -141,116 +46,6 @@ const STATION_ABBREVIATIONS: Record<string, string> = {
 
 function getStationAbbr(stationName: string): string {
   return STATION_ABBREVIATIONS[stationName] || stationName.substring(0, 3).toUpperCase();
-}
-
-// Get theme-aware classes for the main container
-function getThemeClasses(themeName: ThemeName) {
-  switch (themeName) {
-    case "swiss":
-      return {
-        bg: "bg-[#FAFAFA]", text: "text-[#111827]", card: "bg-white",
-        cardHover: "hover:scale-[1.02]", muted: "text-[#6B7280]",
-        accent: "text-[#E31837]", header: "bg-[#F3F4F6]",
-        headerText: "text-[#E31837]", input: "bg-[#F3F4F6]",
-        divider: "border-[#E5E7EB]", isSwiss: true, isSwissDark: false, isConfetti: false,
-      };
-    case "swiss-dark":
-      return {
-        bg: "bg-[#111827]", text: "text-[#F9FAFB]", card: "bg-[#1F2937]",
-        cardHover: "hover:scale-[1.02]", muted: "text-[#9CA3AF]",
-        accent: "text-[#F87171]", header: "bg-[#1F2937]",
-        headerText: "text-[#F87171]", input: "bg-[#1F2937]",
-        divider: "border-[#374151]", isSwiss: true, isSwissDark: true, isConfetti: false,
-      };
-    case "obsidian":
-      return {
-        bg: "bg-[#050506]", text: "text-[#EDEDEF]",
-        card: "bg-gradient-to-b from-white/[0.08] to-white/[0.02] border-white/[0.06]",
-        cardHover: "hover:bg-white/[0.08] hover:border-white/[0.10]",
-        muted: "text-[#8A8F98]", accent: "text-[#5E6AD2]",
-        header: "bg-gradient-to-b from-white/[0.08] to-white/[0.02] border-white/[0.06]",
-        headerText: "text-[#5E6AD2]", input: "bg-[#0f0f12] border-white/[0.10]",
-        divider: "border-white/[0.06]", isSwiss: false, isSwissDark: false, isConfetti: false,
-      };
-    case "napkin":
-      return {
-        bg: "bg-[#fdfbf7] sketch-paper", text: "text-[#2d2d2d]",
-        card: "bg-white border-[#2d2d2d] border-[3px]",
-        cardHover: "hover:shadow-[2px_2px_0px_0px_#2d2d2d] hover:translate-x-[2px] hover:translate-y-[2px]",
-        muted: "text-[#2d2d2d]/50", accent: "text-[#ff4d4d]",
-        header: "bg-white border-[#2d2d2d] border-[3px]",
-        headerText: "text-[#2d2d2d]", input: "bg-white border-[#2d2d2d] border-2",
-        divider: "border-[#2d2d2d]/30 border-dashed",
-        isSwiss: false, isSwissDark: false, isConfetti: false, isNapkin: true,
-      };
-    case "minimalist":
-      return {
-        bg: "bg-white minimalist-grid", text: "text-black font-inter",
-        card: "bg-white border-2 border-black",
-        cardHover: "hover:bg-[#FF3000] hover:text-white transition-all duration-150",
-        muted: "text-[#666666]", accent: "text-[#FF3000]",
-        header: "bg-[#F2F2F2] border-b-4 border-black",
-        headerText: "text-black font-inter uppercase tracking-wider",
-        input: "bg-white border-b-2 border-black", divider: "border-black",
-        isSwiss: false, isSwissDark: false, isConfetti: false, isMinimalist: true,
-      };
-    case "confetti":
-    default:
-      return {
-        bg: "bg-[#FFFDF5] playful-dots", text: "text-[#1E293B]",
-        card: "bg-white border-[#1E293B] border-2",
-        cardHover: "hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_#1E293B] playful-bounce",
-        muted: "text-[#64748B]", accent: "text-[#8B5CF6]",
-        header: "bg-white border-[#1E293B] border-2",
-        headerText: "text-[#8B5CF6]", input: "bg-white border-[#1E293B] border-2",
-        divider: "border-[#E2E8F0]", isSwiss: false, isSwissDark: false, isConfetti: true,
-      };
-  }
-}
-
-// Get theme-aware train type colors
-function getThemedTrainTypeColors(trainType: string, themeName: ThemeName): { bg: string; text: string; border: string } {
-  if (themeName === "swiss") {
-    switch (trainType) {
-      case "Bullet": return { bg: "bg-[#EF4444]", text: "text-white", border: "border-transparent" };
-      case "Limited": return { bg: "bg-[#F59E0B]", text: "text-[#111827]", border: "border-transparent" };
-      default: return { bg: "bg-[#3B82F6]", text: "text-white", border: "border-transparent" };
-    }
-  }
-  if (themeName === "swiss-dark") {
-    switch (trainType) {
-      case "Bullet": return { bg: "bg-[#F87171]", text: "text-white", border: "border-transparent" };
-      case "Limited": return { bg: "bg-[#FBBF24]", text: "text-[#111827]", border: "border-transparent" };
-      default: return { bg: "bg-[#60A5FA]", text: "text-white", border: "border-transparent" };
-    }
-  }
-  if (themeName === "obsidian") {
-    switch (trainType) {
-      case "Bullet": return { bg: "bg-rose-500/20", text: "text-rose-400", border: "border-rose-500/30" };
-      case "Limited": return { bg: "bg-amber-500/20", text: "text-amber-400", border: "border-amber-500/30" };
-      default: return { bg: "bg-[#5E6AD2]/20", text: "text-[#5E6AD2]", border: "border-[#5E6AD2]/30" };
-    }
-  }
-  if (themeName === "napkin") {
-    switch (trainType) {
-      case "Bullet": return { bg: "bg-[#ff4d4d]", text: "text-white", border: "border-[#2d2d2d] border-[3px]" };
-      case "Limited": return { bg: "bg-[#fff9c4]", text: "text-[#2d2d2d]", border: "border-[#2d2d2d] border-[3px]" };
-      default: return { bg: "bg-[#2d5da1]", text: "text-white", border: "border-[#2d2d2d] border-[3px]" };
-    }
-  }
-  if (themeName === "minimalist") {
-    switch (trainType) {
-      case "Bullet": return { bg: "bg-[#FF3000]", text: "text-white", border: "border-black border-2" };
-      case "Limited": return { bg: "bg-black", text: "text-white", border: "border-black border-2" };
-      default: return { bg: "bg-[#F2F2F2]", text: "text-black", border: "border-black border-2" };
-    }
-  }
-  // Default: confetti theme
-  switch (trainType) {
-    case "Bullet": return { bg: "bg-[#F472B6]", text: "text-white", border: "border-[#1E293B] border-2" };
-    case "Limited": return { bg: "bg-[#FBBF24]", text: "text-[#1E293B]", border: "border-[#1E293B] border-2" };
-    default: return { bg: "bg-[#8B5CF6]", text: "text-white", border: "border-[#1E293B] border-2" };
-  }
 }
 
 // Format minutes to human-readable relative time
@@ -275,6 +70,14 @@ function formatDepartureTime(minutes: number | null): string {
   return `In ${hours}h ${mins}m`;
 }
 
+// Napkin theme wobbly borders
+const NAPKIN_BORDERS = {
+  wobbly: "255px 15px 225px 15px / 15px 225px 15px 255px",
+  wobblyMd: "95px 4px 97px 5px / 4px 95px 6px 95px",
+  wobblySm: "40px 8px 45px 6px / 8px 42px 7px 40px",
+};
+
+
 /**
  * Train Position Track - Visual representation of train location on route
  */
@@ -283,19 +86,16 @@ interface TrainPositionTrackProps {
   origin: string;
   destination: string;
   isRealtime: boolean;
-  themeName: ThemeName;
   stops: StopTimeline[];
   segment?: { from: string; to: string; progress: number } | null;
   liveStatusMessage?: string | null;
 }
 
-function TrainPositionTrack({ journey, origin, destination, isRealtime, themeName, stops, segment, liveStatusMessage }: TrainPositionTrackProps) {
-  const themeClasses = getThemeClasses(themeName);
-  const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
-  const isSwissDark = themeName === "swiss-dark";
-  const isConfetti = themeName === "confetti";
-  const isMinimalist = themeName === "minimalist";
+function TrainPositionTrack({ journey, origin, destination, isRealtime, stops, segment, liveStatusMessage }: TrainPositionTrackProps) {
+  const { theme, themeName } = useTheme();
   const isNapkin = themeName === "napkin";
+  const isMinimalist = themeName === "minimalist";
+  const isConfetti = themeName === "confetti";
   
   // Track layout constants
   const TRACK_START = 8, TRACK_END = 92, TRACK_LENGTH = TRACK_END - TRACK_START, MIN_SPACING = 18;
@@ -379,30 +179,8 @@ function TrainPositionTrack({ journey, origin, destination, isRealtime, themeNam
   }
   trainPos = Math.max(2, Math.min(TRACK_END + 3, trainPos));
 
-  // Theme-aware track colors
-  const getTrackBg = () => {
-    if (isSwiss) return "bg-[#F3F4F6] rounded-full";
-    if (isConfetti) return "bg-[#E2E8F0] border-2 border-[#1E293B] rounded-full";
-    if (isMinimalist) return "bg-[#F2F2F2] border-2 border-black";
-    if (isNapkin) return "bg-[#e5e0d8] border-[3px] border-[#2d2d2d]";
-    return "bg-white/[0.06]";
-  };
-  
-  const getProgressBg = () => {
-    if (isSwiss) return isSwissDark ? "bg-[#F87171]" : "bg-[#E31837]";
-    if (isConfetti) return "bg-gradient-to-r from-[#8B5CF6] via-[#F472B6] to-[#FBBF24]";
-    if (isMinimalist) return "bg-black";
-    if (isNapkin) return "bg-[#2d2d2d]";
-    return "bg-gradient-to-r from-[#5E6AD2] to-[#6872D9]";
-  };
-  
-  const getTrainIconBg = () => {
-    if (isSwiss) return isSwissDark ? "#F87171" : "#E31837";
-    if (isConfetti) return "#8B5CF6";
-    if (isMinimalist) return "#FF3000";
-    if (isNapkin) return "#ff4d4d";
-    return "#5E6AD2";
-  };
+  // Check if this is a scheduled (non-live) train
+  const isScheduledTrain = !isRealtime;
 
   // Station marker component
   const StationMarker = ({ position, label, stationName, time, color }: { 
@@ -413,44 +191,59 @@ function TrainPositionTrack({ journey, origin, destination, isRealtime, themeNam
     return (
       <div className="absolute top-3 flex flex-col items-center transition-all duration-200" style={{ left: `${position}%`, transform: 'translateX(-50%)' }}>
         <div 
-          className={`w-5 h-5 ${isConfetti ? "border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]" : isNapkin ? "border-[3px] border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d]" : isMinimalist ? "border-2 border-black" : ""} ${isMinimalist ? "" : "rounded-full"}`}
-          style={{ backgroundColor: color, borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }} 
+          className={`w-5 h-5 ${isConfetti ? "border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]" : isNapkin ? "border-[3px] border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d]" : isMinimalist ? "border-2 border-black" : ""}`}
+          style={{ 
+            backgroundColor: color, 
+            borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : "50%" 
+          }} 
         />
-        <div className={`w-0.5 h-4 ${isMinimalist ? "bg-black" : ""}`} style={{ backgroundColor: isMinimalist ? undefined : `${color}66` }} />
+        <div className={`w-0.5 h-4`} style={{ backgroundColor: `${color}66` }} />
         <div className="mt-1 text-center">
-          <div className={`text-[10px] font-medium uppercase tracking-wide ${isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B] font-bold" : isNapkin ? "text-[#2d2d2d]/60 font-bold" : isMinimalist ? "text-black font-bold tracking-widest text-[9px]" : "text-[#8A8F98]"}`}>{label}</div>
-          <div className={`font-semibold text-sm ${isSwissDark ? "text-[#F9FAFB]" : isSwiss ? "text-[#111827]" : isConfetti ? "text-[#1E293B] font-bold" : isNapkin ? "text-[#2d2d2d] font-bold" : isMinimalist ? "text-black font-bold" : "text-gray-100"}`}>{abbr}</div>
-          {time && <div className={`text-xs ${isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B]" : isNapkin ? "text-[#2d2d2d]/60" : isMinimalist ? "text-[#666666]" : "text-[#8A8F98]"}`}>{time}</div>}
+          <div className={`text-[10px] font-medium uppercase tracking-wide ${theme.classes.textMuted}`}>{label}</div>
+          <div className={`font-semibold text-sm ${theme.classes.textPrimary}`}>{abbr}</div>
+          {time && <div className={`text-xs ${theme.classes.textMuted}`}>{time}</div>}
         </div>
       </div>
     );
   };
 
-  // Check if this is a scheduled (non-live) train
-  const isScheduledTrain = !isRealtime;
-
   return (
-    <div className={`pt-6 pb-4 border-t ${isSwiss ? "border-[#E5E7EB]" : isConfetti ? "border-t-2 border-[#E2E8F0]" : isMinimalist ? "border-t-2 border-black" : isNapkin ? "border-t-[3px] border-dashed border-[#2d2d2d]/30" : themeClasses.divider}`}>
+    <div className={`pt-6 pb-4 border-t ${theme.classes.divider}`}>
       <div className="relative h-28 mx-4">
         {/* Track ties */}
         {Array.from({ length: 12 }, (_, i) => (i + 1) * 8).map((pos) => (
-          <div key={pos} className={`absolute top-6 w-1 h-3 -translate-y-1/2 ${isSwiss ? "bg-[#E5E7EB] rounded-full" : isConfetti ? "bg-[#1E293B]/20 rounded-full" : isMinimalist ? "bg-black/30" : isNapkin ? "bg-[#2d2d2d]/30" : "bg-gray-600/40"}`} style={{ left: `${pos}%`, transform: 'translateX(-50%) translateY(-50%)', borderRadius: isMinimalist ? 0 : undefined }} />
+          <div 
+            key={pos} 
+            className="absolute top-6 w-1 h-3 -translate-y-1/2"
+            style={{ 
+              left: `${pos}%`, 
+              transform: 'translateX(-50%) translateY(-50%)',
+              backgroundColor: theme.raw.border.primary,
+              borderRadius: isMinimalist ? 0 : "9999px"
+            }} 
+          />
         ))}
         
         {/* Track line */}
-        <div className={`absolute top-6 left-0 right-0 ${isSwiss ? "h-2" : isConfetti ? "h-2.5" : isMinimalist ? "h-2" : "h-1.5"} ${isMinimalist ? "" : "rounded-full"} ${getTrackBg()}`} />
+        <div 
+          className={`absolute top-6 left-0 right-0 h-2 ${theme.classes.track}`}
+          style={{ borderRadius: isMinimalist ? 0 : undefined }}
+        />
         
         {/* Progress line - only show for live trains */}
         {!isScheduledTrain && (
-          <div className={`absolute top-6 left-0 ${isSwiss ? "h-2" : isConfetti ? "h-2.5" : isMinimalist ? "h-2" : "h-1.5"} ${isMinimalist ? "" : "rounded-full"} transition-all duration-700 ${getProgressBg()}`} style={{ width: `${trainPos}%` }} />
+          <div 
+            className={`absolute top-6 left-0 h-2 transition-all duration-700 ${theme.classes.trackProgress}`}
+            style={{ width: `${trainPos}%`, borderRadius: isMinimalist ? 0 : "9999px" }} 
+          />
         )}
         
         {/* Train icon - only show animated position for live trains */}
         {!isScheduledTrain && (
           <div className="absolute top-6 z-20 transition-all duration-700 ease-out" style={{ left: `${trainPos}%`, transform: 'translateX(-50%) translateY(-50%)' }}>
             <div 
-              className={`w-9 h-9 flex items-center justify-center ${isConfetti ? "rounded-full border-2 border-[#1E293B] shadow-[3px_3px_0px_0px_#1E293B] animate-bounce" : isNapkin ? "border-[3px] border-[#2d2d2d] shadow-[3px_3px_0px_0px_#2d2d2d]" : isMinimalist ? "border-2 border-black" : "rounded-full"}`}
-              style={{ backgroundColor: getTrainIconBg(), borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}
+              className={`w-9 h-9 flex items-center justify-center ${theme.classes.trainIcon} ${isConfetti ? "animate-bounce" : ""}`}
+              style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : "50%" }}
             >
               <Train className="w-4 h-4 text-white" strokeWidth={2} />
             </div>
@@ -458,27 +251,28 @@ function TrainPositionTrack({ journey, origin, destination, isRealtime, themeNam
         )}
         
         {/* Station markers */}
-        {prevStationName && <StationMarker position={prevPos} label="Prev" stationName={prevStationName} time="" color={isSwissDark ? "#374151" : isSwiss ? "#E5E7EB" : isConfetti ? "#94a3b8" : isMinimalist ? "#666666" : isNapkin ? "#e5e0d8" : "#6b7280"} />}
-        <StationMarker position={boardPos} label="Board" stationName={journey.origin.stopName} time={journey.origin.predictedTime} color={isSwissDark ? "#34D399" : isSwiss ? "#22C55E" : isConfetti ? PLAYFUL.mint : isMinimalist ? "#22C55E" : isNapkin ? "#2d5da1" : "#10b981"} />
-        <StationMarker position={exitPos} label="Exit" stationName={destination} time={journey.destination.predictedTime} color={isSwissDark ? "#F87171" : isSwiss ? "#EF4444" : isConfetti ? PLAYFUL.pink : isMinimalist ? "#FF3000" : isNapkin ? "#ff4d4d" : "#f43f5e"} />
+        {prevStationName && <StationMarker position={prevPos} label="Prev" stationName={prevStationName} time="" color={theme.raw.border.primary} />}
+        <StationMarker position={boardPos} label="Board" stationName={journey.origin.stopName} time={journey.origin.predictedTime} color={theme.raw.accent.success} />
+        <StationMarker position={exitPos} label="Exit" stationName={destination} time={journey.destination.predictedTime} color={theme.raw.accent.error} />
       </div>
       
       {/* Live status message */}
       {liveStatusMessage && !isScheduledTrain && (
-        <div className={`text-center mt-3 text-xs ${isSwiss ? (isSwissDark ? "text-[#34D399]" : "text-[#22C55E]") + " font-medium" : isConfetti ? "font-bold text-[#34D399]" : isMinimalist ? "text-[#FF3000] font-bold uppercase tracking-widest" : isNapkin ? "text-[#2d5da1] font-bold" : "text-emerald-400"}`}>
+        <div className={`text-center mt-3 text-xs font-medium ${theme.classes.statusOnTime}`}>
           📍 {liveStatusMessage}
         </div>
       )}
       
       {/* Note for scheduled trains */}
       {isScheduledTrain && (
-        <div className={`text-center mt-2 text-xs px-4 py-2 mx-4 ${
-          isSwiss ? (isSwissDark ? "bg-[#374151] text-[#FBBF24]" : "bg-[#FEF3C7] text-[#92400E]") + " rounded-lg" :
-          isConfetti ? "bg-[#FBBF24]/20 text-[#92400E] border-2 border-[#1E293B] rounded-xl" :
-          isMinimalist ? "bg-[#F2F2F2] text-[#666666] border-2 border-black font-bold uppercase tracking-wider" :
-          isNapkin ? "bg-[#fff9c4] text-[#2d2d2d] border-2 border-[#2d2d2d]" :
-          "bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg"
-        }`} style={isMinimalist ? { borderRadius: 0 } : isNapkin ? { borderRadius: SKETCH.wobblySm } : undefined}>
+        <div 
+          className={`text-center mt-2 text-xs px-4 py-2 mx-4 ${theme.classes.card}`}
+          style={{ 
+            backgroundColor: `${theme.raw.accent.warning}20`,
+            color: theme.raw.accent.warning,
+            borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius
+          }}
+        >
           <Clock className="w-3 h-3 inline-block mr-1.5 -mt-0.5" strokeWidth={2} />
           Live tracking available when train departs
         </div>
@@ -490,26 +284,22 @@ function TrainPositionTrack({ journey, origin, destination, isRealtime, themeNam
 
 /**
  * Train Card Header Component - Used as the clickable header in accordion
- * This is the collapsed view showing train summary info
  */
 interface TrainCardHeaderProps {
   journey: Journey;
   isExpanded: boolean;
   hasETAChanged?: boolean;
   isRealtime: boolean;
-  themeName: ThemeName;
   timeFilterMode?: TimeFilterModeOption;
 }
 
-function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, themeName, timeFilterMode }: TrainCardHeaderProps) {
-  const colors = getThemedTrainTypeColors(journey.trainType, themeName);
-  const themeClasses = getThemeClasses(themeName);
+function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, timeFilterMode }: TrainCardHeaderProps) {
+  const { theme, themeName } = useTheme();
+  const trainStyle = getTrainTypeStyle(theme, journey.trainType);
   const isArriving = journey.origin.etaMinutes !== null && journey.origin.etaMinutes <= 5;
-  const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
-  const isSwissDark = themeName === "swiss-dark";
-  const isConfetti = themeName === "confetti";
-  const isMinimalist = themeName === "minimalist";
   const isNapkin = themeName === "napkin";
+  const isMinimalist = themeName === "minimalist";
+  const isConfetti = themeName === "confetti";
   
   const isArriveByMode = timeFilterMode === 'arrive_by';
   const isLeaveByMode = timeFilterMode === 'leave_by';
@@ -525,7 +315,6 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
       return;
     }
     
-    // Calculate target time based on current ETA
     const targetTime = new Date();
     targetTime.setMinutes(targetTime.getMinutes() + journey.origin.etaMinutes);
     
@@ -545,99 +334,54 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, [showCountdown, journey.origin.etaMinutes]);
-  
-  // Get accent color for themes
-  const getFlatAccentColor = () => {
-    if (isSwissDark) {
-      switch (journey.trainType) {
-        case "Bullet": return "#F87171";
-        case "Limited": return "#FBBF24";
-        default: return "#60A5FA";
-      }
-    }
-    switch (journey.trainType) {
-      case "Bullet": return "#EF4444";
-      case "Limited": return "#F59E0B";
-      default: return "#3B82F6";
-    }
-  };
-  
-  const getPlayfulAccentColor = () => {
-    switch (journey.trainType) {
-      case "Bullet": return PLAYFUL.pink;
-      case "Limited": return PLAYFUL.amber;
-      default: return PLAYFUL.violet;
-    }
-  };
-  
-  const getSketchAccentColor = () => {
-    switch (journey.trainType) {
-      case "Bullet": return SKETCH.accent;
-      case "Limited": return SKETCH.postit;
-      default: return SKETCH.blue;
-    }
-  };
 
-  // Common header content
-  const renderContent = () => (
+  const isScheduled = journey.isRealtime === false && !journey.isPartialRealtime;
+
+  return (
     <div className="flex items-center justify-between gap-3 w-full">
       <div className="flex items-center gap-3">
         {/* Train icon */}
         <div 
           className={`w-12 h-12 flex items-center justify-center flex-shrink-0 transition-transform duration-300 ${
-            isConfetti ? 'rounded-xl border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]' :
-            isMinimalist ? 'border-2 border-black' :
+            isConfetti ? 'border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]' :
             isNapkin ? 'border-[3px] border-[#2d2d2d] shadow-[3px_3px_0px_0px_#2d2d2d]' :
-            isSwiss ? 'rounded-lg' :
-            'rounded-lg'
+            isMinimalist ? 'border-2 border-black' : ''
           }`}
           style={{ 
-            backgroundColor: isConfetti ? getPlayfulAccentColor() : isNapkin ? getSketchAccentColor() : getFlatAccentColor(),
-            borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined,
+            backgroundColor: trainStyle.bg,
+            borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius,
             transform: isExpanded ? 'scale(1.05)' : 'scale(1)',
           }}
         >
-          <Train className={`w-6 h-6 ${journey.trainType === "Limited" && (isNapkin || isConfetti) ? "text-[#2d2d2d]" : "text-white"}`} strokeWidth={2.5} />
+          <Train className="w-6 h-6" style={{ color: trainStyle.text }} strokeWidth={2.5} />
         </div>
         
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className={`font-bold text-xl tracking-tight ${
-              isSwissDark ? "text-[#F9FAFB]" : 
-              isSwiss ? "text-[#111827]" : 
-              isConfetti ? "text-[#1E293B]" : 
-              isNapkin ? "text-[#2d2d2d] font-[var(--font-kalam)]" :
-              isMinimalist ? "text-black" :
-              "text-white"
-            }`}>
+            <span className={`font-bold text-xl tracking-tight ${theme.classes.textPrimary}`}>
               #{journey.trainNumber}
             </span>
             <span 
               className={`text-xs font-bold px-2.5 py-1 ${
-                isConfetti ? 'rounded-full border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]' :
-                isMinimalist ? 'border-2 border-black uppercase tracking-widest' :
+                isConfetti ? 'border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]' :
                 isNapkin ? 'border-2 border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d]' :
-                'rounded-md'
+                isMinimalist ? 'border-2 border-black uppercase tracking-widest' : ''
               }`}
               style={{ 
-                backgroundColor: isConfetti ? getPlayfulAccentColor() : isNapkin ? getSketchAccentColor() : getFlatAccentColor(), 
-                color: journey.trainType === "Limited" ? (isSwissDark ? "#111827" : FLAT.foreground) : "white",
-                borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined,
+                backgroundColor: trainStyle.bg, 
+                color: trainStyle.text,
+                borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius,
               }}
             >
               {journey.trainType}
             </span>
             {/* Direction indicator */}
             <span 
-              className={`text-[10px] font-medium px-2 py-0.5 flex items-center gap-1 ${
-                isSwissDark ? "bg-[#374151] text-[#9CA3AF]" :
-                isSwiss ? "bg-[#F3F4F6] text-[#6B7280]" :
-                isConfetti ? "bg-[#E2E8F0] text-[#64748B] border border-[#1E293B]/20 rounded-full" :
-                isNapkin ? "bg-[#e5e0d8] text-[#2d2d2d]/70 border border-[#2d2d2d]/30" :
-                isMinimalist ? "bg-[#F2F2F2] text-[#666666] border border-black/20" :
-                "bg-white/10 text-white/60"
-              }`}
-              style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}
+              className={`text-[10px] font-medium px-2 py-0.5 flex items-center gap-1 ${theme.classes.textMuted}`}
+              style={{ 
+                backgroundColor: theme.raw.bg.secondary,
+                borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius
+              }}
             >
               {journey.direction === 'NB' ? (
                 <><ArrowUp className="w-3 h-3" strokeWidth={2.5} />NB</>
@@ -645,54 +389,45 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
                 <><ArrowDown className="w-3 h-3" strokeWidth={2.5} />SB</>
               )}
             </span>
-            {/* Live vs Scheduled indicator - only show "Scheduled" for fully static data */}
-            {journey.isRealtime === false && !journey.isPartialRealtime && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 ${
-                isSwissDark ? "bg-[#374151] text-[#FBBF24]" :
-                isSwiss ? "bg-[#FEF3C7] text-[#92400E]" :
-                isConfetti ? "bg-[#FBBF24] text-[#1E293B] border-2 border-[#1E293B] rounded-full" :
-                isNapkin ? "bg-[#fff9c4] text-[#2d2d2d] border-2 border-[#2d2d2d]" :
-                isMinimalist ? "border-2 border-[#666666] text-[#666666] uppercase tracking-widest" :
-                "bg-amber-500/20 text-amber-400"
-              }`} style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}>
+            {/* Scheduled indicator */}
+            {isScheduled && (
+              <span 
+                className={`text-[10px] font-bold px-2 py-0.5`}
+                style={{ 
+                  backgroundColor: `${theme.raw.accent.warning}20`,
+                  color: theme.raw.accent.warning,
+                  borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius
+                }}
+              >
                 Scheduled
               </span>
             )}
             {/* Best Match badge */}
             {journey.isBestMatch && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 ${
-                isSwissDark ? "bg-[#34D399] text-white" :
-                isSwiss ? "bg-[#22C55E] text-white" :
-                isConfetti ? "bg-[#34D399] text-white border-2 border-[#1E293B] rounded-full shadow-[2px_2px_0px_0px_#1E293B]" :
-                isNapkin ? "bg-[#2d5da1] text-white border-2 border-[#2d2d2d]" :
-                isMinimalist ? "bg-[#FF3000] text-white border-2 border-black" :
-                "bg-emerald-500/20 text-emerald-400"
-              }`} style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}>
+              <span 
+                className={`text-[10px] font-bold px-2 py-0.5 text-white`}
+                style={{ 
+                  backgroundColor: theme.raw.accent.success,
+                  borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius
+                }}
+              >
                 ⭐ Best Match
               </span>
             )}
             {/* Minutes before target badge */}
             {hasTimeFilter && journey.minutesBeforeTarget !== undefined && (
-              <span className={`text-[10px] font-bold px-2 py-0.5 ${
-                isSwissDark ? "bg-[#065F46] text-[#34D399]" :
-                isSwiss ? "bg-[#ECFDF5] text-[#059669]" :
-                isConfetti ? "bg-[#34D399] text-white border-2 border-[#1E293B] rounded-full" :
-                isNapkin ? "bg-[#2d5da1] text-white border-2 border-[#2d2d2d]" :
-                isMinimalist ? "bg-[#FF3000] text-white border-2 border-black uppercase tracking-widest" :
-                "bg-emerald-500/20 text-emerald-400"
-              }`} style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}>
+              <span 
+                className={`text-[10px] font-bold px-2 py-0.5 text-white`}
+                style={{ 
+                  backgroundColor: theme.raw.accent.success,
+                  borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius
+                }}
+              >
                 {journey.minutesBeforeTarget}m early
               </span>
             )}
           </div>
-          <span className={`text-sm ${
-            isSwissDark ? "text-[#9CA3AF]" :
-            isSwiss ? "text-[#6B7280]" :
-            isConfetti ? "text-[#64748B] font-medium" :
-            isNapkin ? "text-[#2d2d2d]/60" :
-            isMinimalist ? "text-[#666666]" :
-            themeClasses.muted
-          }`}>
+          <span className={`text-sm ${theme.classes.textMuted}`}>
             {journey.stopsBetween} stops • {formatRelativeTime(journey.journeyDuration)}
           </span>
         </div>
@@ -704,33 +439,35 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
           {!isArriveByMode && (
             <>
               <div className={`flex items-center justify-end gap-1 px-1 ${hasETAChanged ? 'animate-eta-change' : ''}`}>
-                {journey.isRealtime === false && !journey.isPartialRealtime && <Clock className={`w-4 h-4 ${isConfetti ? "text-[#F472B6]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#666666]" : isSwissDark ? "text-[#FBBF24]" : "text-[#F59E0B]"}`} strokeWidth={2.5} />}
-                <span className={`text-3xl font-bold tracking-tight ${
-                  isArriving ? (isSwissDark ? "text-[#34D399]" : isSwiss ? "text-[#22C55E]" : isConfetti ? "text-[#34D399]" : isNapkin ? "text-[#2d5da1]" : isMinimalist ? "text-black" : "text-emerald-400") :
-                  isLeaveByMode ? (isSwissDark ? "text-[#F87171]" : isSwiss ? "text-[#E31837]" : isConfetti ? "text-[#8B5CF6]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#FF3000]" : "text-[#5E6AD2]") :
-                  (journey.isRealtime === false && !journey.isPartialRealtime) ? (isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B]" : isNapkin ? "text-[#2d2d2d]/50" : isMinimalist ? "text-[#666666]" : "text-gray-400") :
-                  (isSwissDark ? "text-[#F9FAFB]" : isSwiss ? "text-[#111827]" : isConfetti ? "text-[#1E293B]" : isNapkin ? "text-[#2d2d2d]" : isMinimalist ? "text-black" : "text-white")
-                } ${isNapkin ? "font-[var(--font-kalam)]" : ""}`}>
+                {isScheduled && <Clock className="w-4 h-4" style={{ color: theme.raw.accent.warning }} strokeWidth={2.5} />}
+                <span 
+                  className={`text-3xl font-bold tracking-tight`}
+                  style={{ 
+                    color: isArriving ? theme.raw.accent.success : 
+                           isLeaveByMode ? theme.raw.accent.primary :
+                           isScheduled ? theme.raw.text.muted : theme.raw.text.primary
+                  }}
+                >
                   {formatDepartureTime(journey.origin.etaMinutes)}
                 </span>
               </div>
               <div className="flex items-center justify-end gap-2">
-                <span className={`text-xs ${
-                  isLeaveByMode ? (isSwissDark ? "text-[#F87171] font-medium" : isSwiss ? "text-[#E31837] font-medium" : isConfetti ? "text-[#8B5CF6]" : isNapkin ? "text-[#ff4d4d] font-bold" : isMinimalist ? "text-[#FF3000] font-bold uppercase tracking-widest" : "text-[#5E6AD2]") :
-                  (isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B]" : isNapkin ? "text-[#2d2d2d]/60" : isMinimalist ? "text-[#666666]" : themeClasses.muted)
-                }`}>
+                <span 
+                  className={`text-xs`}
+                  style={{ color: isLeaveByMode ? theme.raw.accent.primary : theme.raw.text.muted }}
+                >
                   {isLeaveByMode ? "Departs " : ""}{journey.origin.predictedTime}
                 </span>
                 {/* Live countdown for imminent trains */}
                 {showCountdown && countdown && (
-                  <span className={`text-xs font-mono font-bold px-1.5 py-0.5 animate-pulse ${
-                    isSwissDark ? "bg-[#34D399]/20 text-[#34D399]" :
-                    isSwiss ? "bg-[#22C55E]/10 text-[#22C55E]" :
-                    isConfetti ? "bg-[#34D399]/20 text-[#34D399] border border-[#1E293B]/20 rounded-md" :
-                    isNapkin ? "bg-[#2d5da1]/10 text-[#2d5da1]" :
-                    isMinimalist ? "bg-[#FF3000]/10 text-[#FF3000]" :
-                    "bg-emerald-500/20 text-emerald-400"
-                  }`} style={{ borderRadius: isMinimalist ? 0 : undefined }}>
+                  <span 
+                    className="text-xs font-mono font-bold px-1.5 py-0.5 animate-pulse"
+                    style={{ 
+                      backgroundColor: `${theme.raw.accent.success}20`,
+                      color: theme.raw.accent.success,
+                      borderRadius: isMinimalist ? 0 : theme.styles.borderRadius
+                    }}
+                  >
                     {countdown}
                   </span>
                 )}
@@ -741,18 +478,18 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
           {isArriveByMode && (
             <>
               <div className={`flex items-center justify-end gap-1 px-1 ${hasETAChanged ? 'animate-eta-change' : ''}`}>
-                {journey.isRealtime === false && !journey.isPartialRealtime && <Clock className={`w-4 h-4 ${isConfetti ? "text-[#F472B6]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#666666]" : isSwissDark ? "text-[#FBBF24]" : "text-[#F59E0B]"}`} strokeWidth={2.5} />}
-                <span className={`text-3xl font-bold tracking-tight ${
-                  (journey.isRealtime === false && !journey.isPartialRealtime) ? (isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B]" : isNapkin ? "text-[#2d2d2d]/50" : isMinimalist ? "text-[#666666]" : "text-gray-400") :
-                  (isSwissDark ? "text-[#F87171]" : isSwiss ? "text-[#E31837]" : isConfetti ? "text-[#8B5CF6]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#FF3000]" : "text-[#5E6AD2]")
-                } ${isNapkin ? "font-[var(--font-kalam)]" : ""}`}>
+                {isScheduled && <Clock className="w-4 h-4" style={{ color: theme.raw.accent.warning }} strokeWidth={2.5} />}
+                <span 
+                  className="text-3xl font-bold tracking-tight"
+                  style={{ color: isScheduled ? theme.raw.text.muted : theme.raw.accent.primary }}
+                >
                   {journey.destination.predictedTime}
                 </span>
               </div>
-              <span className={`text-xs font-bold ${isSwissDark ? "text-[#F87171]" : isSwiss ? "text-[#E31837]" : isConfetti ? "text-[#8B5CF6]" : isNapkin ? "text-[#ff4d4d]" : isMinimalist ? "text-[#FF3000] uppercase tracking-widest" : "text-[#5E6AD2]"}`}>
+              <span className="text-xs font-bold" style={{ color: theme.raw.accent.primary }}>
                 Arrives
               </span>
-              <div className={`text-[10px] mt-0.5 ${isSwissDark ? "text-[#9CA3AF]" : isSwiss ? "text-[#6B7280]" : isConfetti ? "text-[#64748B]" : isNapkin ? "text-[#2d2d2d]/60" : isMinimalist ? "text-[#666666]" : themeClasses.muted}`}>
+              <div className={`text-[10px] mt-0.5 ${theme.classes.textMuted}`}>
                 Departs {journey.origin.predictedTime}
               </div>
             </>
@@ -763,136 +500,51 @@ function TrainCardHeader({ journey, isExpanded, hasETAChanged, isRealtime, theme
         <a
           href={`/trains/${journey.tripId}`}
           onClick={(e) => e.stopPropagation()}
-          className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${
-            isConfetti ? 'rounded-lg border-2 border-[#1E293B] hover:bg-[#FBBF24]/20' :
-            isMinimalist ? 'border-2 border-black hover:bg-[#F2F2F2]' :
-            isNapkin ? 'border-2 border-[#2d2d2d] hover:bg-[#e5e0d8]/50' :
-            isSwissDark ? 'rounded-full hover:bg-[#374151]' :
-            isSwiss ? 'rounded-full hover:bg-[#F3F4F6]' :
-            'rounded-full hover:bg-white/10'
-          }`}
-          style={{ borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined }}
+          className={`w-8 h-8 flex items-center justify-center transition-all duration-200 ${theme.classes.buttonGhost}`}
+          style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : theme.styles.borderRadius }}
           title="View full train details"
         >
-          <Maximize2 className={`w-4 h-4 ${
-            isSwissDark ? "text-[#9CA3AF] hover:text-[#F87171]" :
-            isSwiss ? "text-[#6B7280]" :
-            isConfetti ? "text-[#64748B]" :
-            isNapkin ? "text-[#2d2d2d]/60" :
-            isMinimalist ? "text-[#666666]" :
-            "text-[#8A8F98]"
-          }`} />
+          <Maximize2 className={`w-4 h-4 ${theme.classes.textMuted}`} />
         </a>
         
-        {/* Expand/Collapse chevron with rotation animation */}
+        {/* Expand/Collapse chevron */}
         <div 
-          className={`w-8 h-8 flex items-center justify-center transition-all duration-300 ${
-            isConfetti ? 'rounded-lg border-2 border-[#1E293B]' :
-            isMinimalist ? 'border-2 border-black' :
-            isNapkin ? 'border-2 border-[#2d2d2d]' :
-            'rounded-full'
-          }`}
+          className={`w-8 h-8 flex items-center justify-center transition-all duration-300`}
           style={{ 
-            backgroundColor: isExpanded ? (isSwissDark ? 'rgba(248,113,113,0.1)' : isSwiss ? 'rgba(227,24,55,0.1)' : isConfetti ? 'rgba(139,92,246,0.1)' : 'transparent') : 'transparent',
-            borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblySm : undefined,
+            backgroundColor: isExpanded ? `${theme.raw.accent.primary}10` : 'transparent',
+            borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : "50%",
             transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
         >
-          <ChevronDown className={`w-5 h-5 ${
-            isSwissDark ? "text-[#F87171]" :
-            isSwiss ? "text-[#E31837]" :
-            isConfetti ? "text-[#8B5CF6]" :
-            isNapkin ? "text-[#ff4d4d]" :
-            isMinimalist ? "text-[#FF3000]" :
-            "text-[#5E6AD2]"
-          }`} />
+          <ChevronDown className="w-5 h-5" style={{ color: theme.raw.accent.primary }} />
         </div>
       </div>
     </div>
   );
-
-  return renderContent();
 }
 
 
 /**
  * Journey Details Component - The full feature-rich detail view
- * This is shown when a card is expanded
  */
 interface JourneyDetailsProps {
   journey: Journey;
   destination: string;
   origin: string;
   isRealtime: boolean;
-  themeName: ThemeName;
 }
 
-function JourneyDetails({ journey, destination, origin, isRealtime, themeName }: JourneyDetailsProps) {
-  const colors = getThemedTrainTypeColors(journey.trainType, themeName);
-  const themeClasses = getThemeClasses(themeName);
-  const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
-  const isSwissDark = themeName === "swiss-dark";
-  const isConfetti = themeName === "confetti";
-  const isMinimalist = themeName === "minimalist";
+function JourneyDetails({ journey, destination, origin, isRealtime }: JourneyDetailsProps) {
+  const { theme, themeName } = useTheme();
   const isNapkin = themeName === "napkin";
+  const isMinimalist = themeName === "minimalist";
+  const isConfetti = themeName === "confetti";
+  
   const [showAllStops, setShowAllStops] = useState(false);
   const [stops, setStops] = useState<StopTimeline[]>([]);
   const [loadingStops, setLoadingStops] = useState(false);
-  const [countdown, setCountdown] = useState<string>("");
   const [segment, setSegment] = useState<{ from: string; to: string; progress: number } | null>(null);
   const lastSegmentRef = useRef<{ from: string; to: string; progress: number } | null>(null);
-  
-  // Get accent colors
-  const getFlatAccentColor = () => {
-    if (isSwissDark) {
-      switch (journey.trainType) {
-        case "Bullet": return "#F87171";
-        case "Limited": return "#FBBF24";
-        default: return "#60A5FA";
-      }
-    }
-    switch (journey.trainType) {
-      case "Bullet": return "#EF4444";
-      case "Limited": return "#F59E0B";
-      default: return "#3B82F6";
-    }
-  };
-  
-  const getPlayfulAccentColor = () => {
-    switch (journey.trainType) {
-      case "Bullet": return PLAYFUL.pink;
-      case "Limited": return PLAYFUL.amber;
-      default: return PLAYFUL.violet;
-    }
-  };
-
-  
-  // Live countdown timer
-  useEffect(() => {
-    if (journey.origin.etaMinutes === null || journey.origin.etaMinutes < 0) {
-      setCountdown("");
-      return;
-    }
-    const targetTime = new Date();
-    targetTime.setMinutes(targetTime.getMinutes() + journey.origin.etaMinutes);
-    
-    const updateCountdown = () => {
-      const now = new Date();
-      const diff = targetTime.getTime() - now.getTime();
-      if (diff <= 0) { setCountdown("Now"); return; }
-      const minutes = Math.floor(diff / 60000);
-      const seconds = Math.floor((diff % 60000) / 1000);
-      if (minutes >= 60) {
-        const hours = Math.floor(minutes / 60);
-        setCountdown(`${hours}:${(minutes % 60).toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-      } else {
-        setCountdown(`${minutes}:${seconds.toString().padStart(2, '0')}`);
-      }
-    };
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 1000);
-    return () => clearInterval(interval);
-  }, [journey.origin.etaMinutes]);
   
   // Fetch stops
   const fetchStops = useCallback(async () => {
@@ -921,7 +573,6 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
     } catch (err) { console.error("Failed to fetch position:", err); }
   }, [journey.tripId, origin, destination]);
 
-  
   useEffect(() => {
     setLoadingStops(true);
     fetchStops();
@@ -938,7 +589,6 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
     setLoadingStops(true);
   }, [journey.tripId]);
   
-  // Get status
   const journeyIsRealtime = journey.isRealtime !== false;
   
   const getLiveStatusMessage = (): string | null => {
@@ -952,15 +602,6 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
   
   const liveStatusMessage = getLiveStatusMessage();
   
-  const getStatus = () => {
-    if (!journeyIsRealtime) return { text: "Scheduled", color: "muted" };
-    if (journey.origin.etaMinutes !== null && journey.origin.etaMinutes <= 2) {
-      return { text: "Arriving!", color: "success" };
-    }
-    return { text: "On Time", color: "primary" };
-  };
-  const status = getStatus();
-  
   // All stops in journey order
   const allStops = (() => {
     if (stops.length === 0) return [];
@@ -969,61 +610,63 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
     return originIdx > destIdx ? [...stops].reverse() : stops;
   })();
 
-
-  // Theme-specific colors
-  const flatBg = isSwissDark ? "bg-[#1F2937]" : "bg-white";
-  const flatSecondaryBg = isSwissDark ? "bg-[#374151]" : "bg-[#F3F4F6]";
-  const flatTextPrimary = isSwissDark ? "text-[#F9FAFB]" : "text-[#111827]";
-  const flatTextMuted = isSwissDark ? "text-[#9CA3AF]" : "text-[#6B7280]";
-  const flatBorder = isSwissDark ? "border-[#374151]" : "border-[#E5E7EB]";
-  const flatAccent = isSwissDark ? "#F87171" : "#E31837";
-  const flatSuccess = isSwissDark ? "#34D399" : "#22C55E";
-  const flatWarning = isSwissDark ? "#FBBF24" : "#F59E0B";
-
   return (
-    <div className={`${
-      isSwiss ? `${flatBg} rounded-lg` :
-      isConfetti ? "bg-white border-t-2 border-[#E2E8F0]" :
-      isNapkin ? "bg-white border-t-[3px] border-dashed border-[#2d2d2d]/30" :
-      isMinimalist ? "bg-white border-t-2 border-black" :
-      `${themeClasses.card} border-t`
-    } overflow-hidden relative`}>
+    <div className={`${theme.classes.card} overflow-hidden relative`} style={{ borderTop: `1px solid ${theme.raw.border.primary}` }}>
       
       {/* Stats row */}
-      <div className={`flex ${flatSecondaryBg} ${isConfetti ? "gap-3 p-4 border-b-2 border-[#E2E8F0] bg-[#FFFDF5]" : isNapkin ? "gap-3 p-4 border-b-[3px] border-dashed border-[#2d2d2d]/30 bg-[#fdfbf7]" : isMinimalist ? "border-b-2 border-black" : ""}`}>
-        <div className={`flex-1 p-3 text-center ${isConfetti ? "flex items-center justify-center gap-2 py-2 px-3 bg-[#8B5CF6] rounded-full border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]" : isNapkin ? "flex items-center justify-center gap-2 py-2 px-3 bg-[#2d5da1] border-[3px] border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d]" : isMinimalist ? "flex items-center justify-center gap-2 py-3 border-r-2 border-black" : ""}`} style={isNapkin ? { borderRadius: SKETCH.wobblySm } : undefined}>
-          <div className={`flex items-center justify-center gap-2 ${!isConfetti && !isNapkin && !isMinimalist ? "" : ""}`}>
-            {isSwiss && <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: flatWarning }}><MapPin className="w-4 h-4 text-white" strokeWidth={2} /></div>}
-            {isConfetti && <MapPin className="w-4 h-4 text-white" strokeWidth={2.5} />}
-            {isNapkin && <MapPin className="w-4 h-4 text-white" strokeWidth={2.5} />}
-            {isMinimalist && <MapPin className="w-4 h-4 text-black" strokeWidth={2} />}
-            <span className={`text-sm font-medium ${isSwiss ? flatTextPrimary : isConfetti || isNapkin ? "font-bold text-white" : isMinimalist ? "font-bold text-black uppercase tracking-widest text-xs" : ""}`}>{journey.stopsBetween} Stops</span>
-          </div>
+      <div className="flex" style={{ backgroundColor: theme.raw.bg.secondary }}>
+        <div 
+          className={`flex-1 p-3 text-center flex items-center justify-center gap-2 ${isConfetti || isNapkin ? 'py-2 px-3' : ''}`}
+          style={isConfetti || isNapkin ? { 
+            backgroundColor: theme.raw.accent.secondary,
+            margin: '0.5rem',
+            borderRadius: isNapkin ? NAPKIN_BORDERS.wobblySm : '9999px',
+            border: isConfetti ? '2px solid #1E293B' : isNapkin ? '3px solid #2d2d2d' : undefined,
+            boxShadow: isConfetti ? '2px 2px 0px 0px #1E293B' : isNapkin ? '2px 2px 0px 0px #2d2d2d' : undefined
+          } : undefined}
+        >
+          <MapPin className="w-4 h-4" style={{ color: isConfetti || isNapkin ? '#FFFFFF' : theme.raw.accent.warning }} strokeWidth={2.5} />
+          <span className={`text-sm font-medium`} style={{ color: isConfetti || isNapkin ? '#FFFFFF' : theme.raw.text.primary }}>
+            {journey.stopsBetween} Stops
+          </span>
         </div>
-        <div className={`flex-1 p-3 text-center ${isConfetti ? "flex items-center justify-center gap-2 py-2 px-3 bg-[#F472B6] rounded-full border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]" : isNapkin ? "flex items-center justify-center gap-2 py-2 px-3 bg-[#ff4d4d] border-[3px] border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d]" : isMinimalist ? "flex items-center justify-center gap-2 py-3 border-r-2 border-black" : ""}`} style={isNapkin ? { borderRadius: SKETCH.wobblySm } : undefined}>
-          <div className={`flex items-center justify-center gap-2`}>
-            {isSwiss && <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: flatAccent }}><Clock className="w-4 h-4 text-white" strokeWidth={2} /></div>}
-            {isConfetti && <Clock className="w-4 h-4 text-white" strokeWidth={2.5} />}
-            {isNapkin && <Clock className="w-4 h-4 text-white" strokeWidth={2.5} />}
-            {isMinimalist && <Clock className="w-4 h-4 text-black" strokeWidth={2} />}
-            <span className={`text-sm font-medium ${isSwiss ? flatTextPrimary : isConfetti || isNapkin ? "font-bold text-white" : isMinimalist ? "font-bold text-black uppercase tracking-widest text-xs" : ""}`}>{formatRelativeTime(journey.journeyDuration)}</span>
-          </div>
+        <div 
+          className={`flex-1 p-3 text-center flex items-center justify-center gap-2 ${isConfetti || isNapkin ? 'py-2 px-3' : ''}`}
+          style={isConfetti || isNapkin ? { 
+            backgroundColor: theme.raw.accent.error,
+            margin: '0.5rem',
+            borderRadius: isNapkin ? NAPKIN_BORDERS.wobblySm : '9999px',
+            border: isConfetti ? '2px solid #1E293B' : isNapkin ? '3px solid #2d2d2d' : undefined,
+            boxShadow: isConfetti ? '2px 2px 0px 0px #1E293B' : isNapkin ? '2px 2px 0px 0px #2d2d2d' : undefined
+          } : undefined}
+        >
+          <Clock className="w-4 h-4" style={{ color: isConfetti || isNapkin ? '#FFFFFF' : theme.raw.accent.primary }} strokeWidth={2.5} />
+          <span className={`text-sm font-medium`} style={{ color: isConfetti || isNapkin ? '#FFFFFF' : theme.raw.text.primary }}>
+            {formatRelativeTime(journey.journeyDuration)}
+          </span>
         </div>
-        <div className={`flex-1 p-3 text-center ${isConfetti ? `flex items-center justify-center py-2 px-3 rounded-full border-2 border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B] ${journeyIsRealtime ? "bg-[#34D399]" : "bg-[#FBBF24]"}` : isNapkin ? `flex items-center justify-center py-2 px-3 border-[3px] border-[#2d2d2d] shadow-[2px_2px_0px_0px_#2d2d2d] ${journeyIsRealtime ? "bg-[#2d5da1]" : "bg-[#fff9c4]"}` : isMinimalist ? "flex items-center justify-center gap-2 py-3" : ""}`} style={isNapkin ? { borderRadius: SKETCH.wobblySm } : undefined}>
-          {isSwiss && <div className={`w-8 h-8 rounded-full flex items-center justify-center`} style={{ backgroundColor: journeyIsRealtime ? flatSuccess : "#6B7280" }}><span className="text-white text-xs font-medium">{journeyIsRealtime ? "●" : "○"}</span></div>}
-          <span className={`text-sm font-medium ${isSwiss ? flatTextPrimary : isConfetti ? `font-bold ${journeyIsRealtime ? "text-white" : "text-[#1E293B]"}` : isNapkin ? `font-bold ${journeyIsRealtime ? "text-white" : "text-[#2d2d2d]"}` : isMinimalist ? "font-bold text-black uppercase tracking-widest text-xs" : ""}`}>
+        <div 
+          className={`flex-1 p-3 text-center flex items-center justify-center gap-2 ${isConfetti || isNapkin ? 'py-2 px-3' : ''}`}
+          style={isConfetti || isNapkin ? { 
+            backgroundColor: journeyIsRealtime ? theme.raw.accent.success : theme.raw.accent.warning,
+            margin: '0.5rem',
+            borderRadius: isNapkin ? NAPKIN_BORDERS.wobblySm : '9999px',
+            border: isConfetti ? '2px solid #1E293B' : isNapkin ? '3px solid #2d2d2d' : undefined,
+            boxShadow: isConfetti ? '2px 2px 0px 0px #1E293B' : isNapkin ? '2px 2px 0px 0px #2d2d2d' : undefined
+          } : undefined}
+        >
+          <span className={`text-sm font-medium`} style={{ color: isConfetti || isNapkin ? '#FFFFFF' : theme.raw.text.primary }}>
             {journeyIsRealtime ? "● Live" : "○ Schedule"}
           </span>
         </div>
       </div>
 
-      {/* Train Position Track - Visual representation of train location */}
+      {/* Train Position Track */}
       <TrainPositionTrack 
         journey={journey}
         origin={origin}
         destination={destination}
         isRealtime={journeyIsRealtime}
-        themeName={themeName}
         stops={stops}
         segment={segment}
         liveStatusMessage={liveStatusMessage}
@@ -1032,35 +675,20 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
       {/* Show stops button */}
       <button 
         onClick={() => setShowAllStops(!showAllStops)} 
-        className={`w-full flex items-center justify-center gap-2 p-3 border-t ${
-          isSwiss ? `${flatBorder} ${flatSecondaryBg} ${isSwissDark ? "hover:bg-[#4B5563]" : "hover:bg-[#E5E7EB]"}` :
-          isConfetti ? "border-[#E2E8F0] bg-white hover:bg-[#FBBF24]" :
-          isNapkin ? "border-[#2d2d2d]/30 border-dashed hover:bg-[#e5e0d8]/50" :
-          isMinimalist ? "border-black border-t-2 bg-[#F2F2F2] hover:bg-[#FF3000] hover:text-white" :
-          ""
-        } transition-all duration-200 text-sm ${
-          isSwiss ? flatTextPrimary :
-          isConfetti ? "font-bold text-[#1E293B]" :
-          isNapkin ? "font-bold text-[#2d2d2d]/70" :
-          isMinimalist ? "font-bold text-black uppercase tracking-widest" :
-          ""
-        }`}
+        className={`w-full flex items-center justify-center gap-2 p-3 transition-all duration-200 ${theme.classes.textPrimary}`}
+        style={{ 
+          borderTop: `1px solid ${theme.raw.border.primary}`,
+          backgroundColor: theme.raw.bg.secondary
+        }}
       >
         {showAllStops ? <><ChevronUp className="w-4 h-4" />Hide Stops</> : <><ChevronDown className="w-4 h-4" />Show All {journey.totalStops} Stops</>}
       </button>
 
-      
       {/* Stops list */}
       {showAllStops && (
-        <div className={`p-4 border-t ${
-          isSwiss ? `${flatBorder} ${flatBg}` :
-          isConfetti ? "border-[#E2E8F0] bg-[#FFFDF5]" :
-          isNapkin ? "border-[#2d2d2d]/30 border-dashed bg-[#fdfbf7]" :
-          isMinimalist ? "border-black border-t-2" :
-          ""
-        }`}>
+        <div className="p-4" style={{ borderTop: `1px solid ${theme.raw.border.primary}`, backgroundColor: theme.raw.bg.card }}>
           {loadingStops ? (
-            <div className={`text-center py-4 ${flatTextMuted}`}>Loading stops...</div>
+            <div className={`text-center py-4 ${theme.classes.textMuted}`}>Loading stops...</div>
           ) : allStops.length > 0 ? (
             <div className="space-y-0">
               {allStops.map((stop, idx) => {
@@ -1070,40 +698,56 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
                 const isCurrent = stop.status === 'approaching';
                 const isLast = idx === allStops.length - 1;
                 
-                const stopAccent = isSwissDark ? "#F87171" : "#E31837";
-                const stopSuccess = isSwissDark ? "#34D399" : "#22C55E";
-                const stopDanger = isSwissDark ? "#F87171" : "#EF4444";
-                const stopMuted = isSwissDark ? "#374151" : "#E5E7EB";
-                
                 return (
                   <div key={stop.stopName} className="flex items-start gap-3 stop-reveal-item" style={{ animationDelay: `${idx * 50}ms` }}>
                     <div className="flex flex-col items-center">
                       <div 
                         className={`w-4 h-4 rounded-full ${isConfetti || isNapkin ? "border-2 border-[#1E293B] shadow-[1px_1px_0px_0px_#1E293B]" : ""}`}
                         style={{ 
-                          backgroundColor: isOriginStop ? stopSuccess : isDestStop ? stopDanger : isPassed ? stopAccent : isCurrent ? stopAccent : stopMuted 
+                          backgroundColor: isOriginStop ? theme.raw.accent.success : isDestStop ? theme.raw.accent.error : isPassed ? theme.raw.accent.primary : isCurrent ? theme.raw.accent.primary : theme.raw.border.primary 
                         }} 
                       />
-                      {!isLast && <div className="w-0.5 h-8" style={{ backgroundColor: isPassed ? stopAccent : stopMuted }} />}
+                      {!isLast && <div className="w-0.5 h-8" style={{ backgroundColor: isPassed ? theme.raw.accent.primary : theme.raw.border.primary }} />}
                     </div>
                     <div className="flex-1 pb-3">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`font-medium ${isPassed ? (isSwissDark ? 'text-[#F87171]' : 'text-[#E31837]') : isSwiss ? flatTextPrimary : isConfetti ? (isPassed ? 'text-[#8B5CF6]' : 'text-[#1E293B]') : isNapkin ? (isPassed ? 'text-[#ff4d4d]' : 'text-[#2d2d2d]') : isMinimalist ? 'text-black' : ''}`}>
+                          <span className={`font-medium`} style={{ color: isPassed ? theme.raw.accent.primary : theme.raw.text.primary }}>
                             {stop.stopName}
                           </span>
-                          {isPassed && <span style={{ color: stopAccent }}>✓</span>}
-                          {isCurrent && <span className="text-xs px-2 py-0.5 text-white rounded-md font-medium animate-pulse" style={{ backgroundColor: stopAccent }}>Now</span>}
-                          {isOriginStop && !isCurrent && <span className="text-xs px-2 py-0.5 text-white rounded-md font-medium" style={{ backgroundColor: stopSuccess }}>Board</span>}
-                          {isDestStop && !isCurrent && <span className="text-xs px-2 py-0.5 text-white rounded-md font-medium" style={{ backgroundColor: stopDanger }}>Exit</span>}
+                          {isPassed && <span style={{ color: theme.raw.accent.primary }}>✓</span>}
+                          {isCurrent && (
+                            <span 
+                              className="text-xs px-2 py-0.5 text-white font-medium animate-pulse"
+                              style={{ backgroundColor: theme.raw.accent.primary, borderRadius: theme.styles.borderRadius }}
+                            >
+                              Now
+                            </span>
+                          )}
+                          {isOriginStop && !isCurrent && (
+                            <span 
+                              className="text-xs px-2 py-0.5 text-white font-medium"
+                              style={{ backgroundColor: theme.raw.accent.success, borderRadius: theme.styles.borderRadius }}
+                            >
+                              Board
+                            </span>
+                          )}
+                          {isDestStop && !isCurrent && (
+                            <span 
+                              className="text-xs px-2 py-0.5 text-white font-medium"
+                              style={{ backgroundColor: theme.raw.accent.error, borderRadius: theme.styles.borderRadius }}
+                            >
+                              Exit
+                            </span>
+                          )}
                         </div>
                         <div className="text-right">
                           {stop.etaMinutes !== null && !isPassed ? (
-                            <span className="font-medium" style={{ color: stop.etaMinutes <= 5 ? stopSuccess : (isSwissDark ? '#F9FAFB' : '#111827') }}>
+                            <span className="font-medium" style={{ color: stop.etaMinutes <= 5 ? theme.raw.accent.success : theme.raw.text.primary }}>
                               {formatRelativeTime(stop.etaMinutes)}
                             </span>
                           ) : (
-                            <span className={`text-sm ${flatTextMuted}`}>{stop.predictedTime}</span>
+                            <span className={theme.classes.textMuted}>{stop.predictedTime}</span>
                           )}
                         </div>
                       </div>
@@ -1113,7 +757,7 @@ function JourneyDetails({ journey, destination, origin, isRealtime, themeName }:
               })}
             </div>
           ) : (
-            <div className={`text-center py-4 ${flatTextMuted}`}>No stops data available</div>
+            <div className={`text-center py-4 ${theme.classes.textMuted}`}>No stops data available</div>
           )}
         </div>
       )}
@@ -1133,28 +777,25 @@ interface ExpandableTrainCardProps {
   destination: string;
   isRealtime: boolean;
   hasETAChanged?: boolean;
-  themeName: ThemeName;
   timeFilterMode?: TimeFilterModeOption;
 }
 
 const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCardProps>(
-  ({ journey, isExpanded, onToggle, origin, destination, isRealtime, hasETAChanged, themeName, timeFilterMode }, ref) => {
-    const themeClasses = getThemeClasses(themeName);
-    const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
-    const isSwissDark = themeName === "swiss-dark";
-    const isConfetti = themeName === "confetti";
-    const isMinimalist = themeName === "minimalist";
+  ({ journey, isExpanded, onToggle, origin, destination, isRealtime, hasETAChanged, timeFilterMode }, ref) => {
+    const { theme, themeName } = useTheme();
     const isNapkin = themeName === "napkin";
+    const isMinimalist = themeName === "minimalist";
+    const isConfetti = themeName === "confetti";
     
     // Get expanded border/shadow styles
     const getExpandedStyles = () => {
       if (isExpanded) {
-        if (isSwissDark) return { borderColor: '#F87171', boxShadow: '0 0 0 2px rgba(248,113,113,0.3)' };
-        if (isSwiss) return { borderColor: '#E31837', boxShadow: '0 0 0 2px rgba(227,24,55,0.3)' };
-        if (isConfetti) return { borderColor: '#8B5CF6', boxShadow: '6px 6px 0px 0px #1E293B' };
-        if (isNapkin) return { borderColor: '#ff4d4d', boxShadow: '6px 6px 0px 0px #2d2d2d' };
-        if (isMinimalist) return { borderColor: '#FF3000' };
-        return { borderColor: '#5E6AD2', boxShadow: '0 0 30px rgba(94,106,210,0.2)' };
+        return { 
+          borderColor: theme.raw.accent.primary, 
+          boxShadow: isConfetti ? '6px 6px 0px 0px #1E293B' : 
+                     isNapkin ? '6px 6px 0px 0px #2d2d2d' : 
+                     `0 0 0 2px ${theme.raw.accent.primary}30`
+        };
       }
       return {};
     };
@@ -1162,36 +803,22 @@ const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCard
     return (
       <div
         ref={ref}
-        className={`transition-all duration-300 overflow-hidden ${
-          isSwiss ? 'rounded-lg border' :
-          isConfetti ? 'rounded-2xl border-2 border-[#1E293B] shadow-[4px_4px_0px_0px_#1E293B]' :
-          isNapkin ? 'border-[3px] border-[#2d2d2d] shadow-[4px_4px_0px_0px_#2d2d2d]' :
-          isMinimalist ? 'border-2 border-black' :
-          'rounded-xl border'
-        } ${isSwissDark ? 'bg-[#1F2937] border-[#374151]' : isSwiss ? 'bg-white border-[#E5E7EB]' : isConfetti ? 'bg-white' : isNapkin ? 'bg-white' : isMinimalist ? 'bg-white' : themeClasses.card}`}
+        className={`transition-all duration-300 overflow-hidden ${theme.classes.card}`}
         style={{
           ...getExpandedStyles(),
-          borderRadius: isMinimalist ? 0 : isNapkin ? SKETCH.wobblyMd : undefined,
+          borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblyMd : theme.styles.borderRadius,
         }}
       >
         {/* Clickable Header */}
         <button
           onClick={onToggle}
-          className={`w-full text-left p-4 transition-all duration-200 ${
-            isSwissDark ? 'hover:bg-[#374151]' :
-            isSwiss ? 'hover:bg-[#F3F4F6]' :
-            isConfetti ? 'hover:bg-[#FBBF24]/10' :
-            isNapkin ? 'hover:bg-[#e5e0d8]/30' :
-            isMinimalist ? 'hover:bg-[#F2F2F2]' :
-            'hover:bg-white/5'
-          }`}
+          className={`w-full text-left p-4 transition-all duration-200 ${theme.classes.cardHover}`}
         >
           <TrainCardHeader
             journey={journey}
             isExpanded={isExpanded}
             hasETAChanged={hasETAChanged}
             isRealtime={isRealtime}
-            themeName={themeName}
             timeFilterMode={timeFilterMode}
           />
         </button>
@@ -1209,7 +836,6 @@ const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCard
             origin={origin}
             destination={destination}
             isRealtime={isRealtime}
-            themeName={themeName}
           />
         </div>
       </div>
@@ -1225,11 +851,10 @@ ExpandableTrainCard.displayName = 'ExpandableTrainCard';
  */
 export default function CleanJourneyView() {
   const { theme, themeName } = useTheme();
-  const themeClasses = getThemeClasses(themeName);
-  const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
-  const isSwissDark = themeName === "swiss-dark";
-  const isConfetti = themeName === "confetti";
+  const isNapkin = themeName === "napkin";
   const isMinimalist = themeName === "minimalist";
+  const isConfetti = themeName === "confetti";
+  const isSwiss = themeName === "swiss" || themeName === "swiss-dark";
   
   // URL state management
   const searchParams = useSearchParams();
@@ -1243,7 +868,7 @@ export default function CleanJourneyView() {
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   
-  // Accordion state: expandedJourney replaces selectedJourney
+  // Accordion state
   const [expandedJourney, setExpandedJourney] = useState<string | null>(null);
   const expandedCardRef = useRef<HTMLDivElement>(null);
   
@@ -1276,7 +901,7 @@ export default function CleanJourneyView() {
     setTimeout(() => setFeedbackVisible(false), 2000);
   }, []);
   
-  // Sync state to URL (without triggering navigation)
+  // Sync state to URL
   const updateURL = useCallback((newOrigin: string, newDest: string, newMode: TimeFilterModeOption, newTime: Date) => {
     const params = new URLSearchParams();
     if (newOrigin) params.set('from', newOrigin);
@@ -1289,8 +914,7 @@ export default function CleanJourneyView() {
     router.replace(newURL, { scroll: false });
   }, [router]);
 
-  
-  // Handle accordion toggle - only one card expanded at a time
+  // Handle accordion toggle
   const handleToggleExpand = useCallback((journeyId: string) => {
     if (expandedJourney === journeyId) {
       setExpandedJourney(null);
@@ -1299,7 +923,6 @@ export default function CleanJourneyView() {
       setExpandedJourney(journeyId);
       const journey = journeys.find(j => j.tripId === journeyId);
       showFeedback(`Viewing Train #${journey?.trainNumber || journeyId}`);
-      // Scroll to expanded card after animation starts
       setTimeout(() => {
         expandedCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }, 100);
@@ -1333,13 +956,12 @@ export default function CleanJourneyView() {
     if (isInitializedRef.current) return;
     isInitializedRef.current = true;
     
-    // Read from URL params
     const urlOrigin = searchParams.get('from');
     const urlDest = searchParams.get('to');
     const urlMode = searchParams.get('mode') as TimeFilterModeOption | null;
     const urlTime = searchParams.get('time');
     
-    // Determine origin: URL > localStorage > default (Sunnyvale)
+    // Determine origin
     let newOrigin = "";
     if (urlOrigin && stations.find(s => s.stopname === urlOrigin)) {
       newOrigin = urlOrigin;
@@ -1354,7 +976,7 @@ export default function CleanJourneyView() {
       }
     }
     
-    // Determine destination: URL > localStorage > default (Palo Alto)
+    // Determine destination
     let newDest = "";
     if (urlDest && stations.find(s => s.stopname === urlDest)) {
       newDest = urlDest;
@@ -1386,7 +1008,7 @@ export default function CleanJourneyView() {
     setDestination(newDest);
   }, [searchParams]);
 
-  // Save to localStorage and update URL when origin/destination changes
+  // Save to localStorage and update URL
   useEffect(() => { 
     if (origin) {
       localStorage.setItem("selectedOrigin", origin);
@@ -1401,7 +1023,6 @@ export default function CleanJourneyView() {
       localStorage.setItem("selectedDestination", destination);
     }
   }, [destination]);
-
 
   const expandedJourneyIdRef = useRef<string | null>(null);
   useEffect(() => { expandedJourneyIdRef.current = expandedJourney; }, [expandedJourney]);
@@ -1442,7 +1063,6 @@ export default function CleanJourneyView() {
         setDataSource(data.metadata.dataSource);
         setLastUpdated(new Date());
         
-        // Keep expanded journey if it still exists
         const currentExpandedId = expandedJourneyIdRef.current;
         if (currentExpandedId && !data.journeys.find(j => j.tripId === currentExpandedId)) {
           setExpandedJourney(null);
@@ -1478,77 +1098,41 @@ export default function CleanJourneyView() {
 
 
   return (
-    <div className={`min-h-screen ${themeClasses.bg} ${themeClasses.text} ${theme.typography.fontFamily}`}>
-      <ActionFeedback message={feedbackMessage} visible={feedbackVisible} themeName={themeName} />
+    <div className={`min-h-screen ${theme.classes.container} ${theme.classes.textPrimary} ${theme.typography.fontFamily}`}>
+      <ActionFeedback message={feedbackMessage} visible={feedbackVisible} />
       
       <div className="max-w-3xl mx-auto p-4 lg:p-6">
         {/* Header */}
-        <div className={`flex items-center justify-between mb-6 relative ${isSwiss ? (isSwissDark ? "pb-6 border-b border-[#F87171]/20" : "pb-6 border-b border-[#E31837]/20") : isConfetti ? "pb-6 border-b-2 border-[#E2E8F0]" : themeName === "napkin" ? "pb-6 border-b-[3px] border-dashed border-[#2d2d2d]/30" : isMinimalist ? "pb-6 border-b-4 border-black" : ""}`}>
-          {isSwiss && <div className={`absolute -top-4 -left-4 w-24 h-24 ${isSwissDark ? "bg-[#F87171]/5" : "bg-[#E31837]/5"} rounded-full blur-2xl pointer-events-none`} />}
-          <div className="flex items-center gap-3 relative">
-            {/* Logo */}
-            {isSwiss ? (
-              <div className={`flex items-center gap-0.5 p-2 ${isSwissDark ? "bg-[#1F2937]" : "bg-white"} rounded-lg ${isSwissDark ? "" : "shadow-sm"}`}>
-                <div className={`w-2.5 h-9 ${isSwissDark ? "bg-[#F87171]" : "bg-[#E31837]"} rounded-sm`} />
-                <div className={`w-2.5 h-7 ${isSwissDark ? "bg-[#34D399]" : "bg-[#10B981]"} rounded-sm`} />
-                <div className={`w-2.5 h-5 ${isSwissDark ? "bg-[#FBBF24]" : "bg-[#F59E0B]"} rounded-sm`} />
-              </div>
-            ) : isConfetti ? (
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-10 bg-[#8B5CF6] border-2 border-[#1E293B] rounded-full shadow-[2px_2px_0px_0px_#1E293B]" />
-                <div className="w-3 h-7 bg-[#F472B6] border-2 border-[#1E293B] rounded-full shadow-[2px_2px_0px_0px_#1E293B]" />
-                <div className="w-3 h-4 bg-[#FBBF24] border-2 border-[#1E293B] rounded-full shadow-[2px_2px_0px_0px_#1E293B]" />
-              </div>
-            ) : themeName === "napkin" ? (
-              <div className="flex items-center gap-1 p-2 bg-white border-[3px] border-[#2d2d2d] shadow-[3px_3px_0px_0px_#2d2d2d] rotate-[-2deg]" style={{ borderRadius: SKETCH.wobblySm }}>
-                <div className="w-3 h-10 bg-[#ff4d4d] border-2 border-[#2d2d2d]" style={{ borderRadius: "20px 4px 22px 3px / 4px 20px 3px 22px" }} />
-                <div className="w-3 h-7 bg-[#2d5da1] border-2 border-[#2d2d2d]" style={{ borderRadius: "18px 5px 20px 4px / 5px 18px 4px 20px" }} />
-                <div className="w-3 h-4 bg-[#fff9c4] border-2 border-[#2d2d2d]" style={{ borderRadius: "15px 3px 17px 4px / 3px 15px 4px 17px" }} />
-              </div>
-            ) : isMinimalist ? (
-              <div className="flex items-center gap-1">
-                <div className="w-3 h-10 bg-black" />
-                <div className="w-3 h-7 bg-[#FF3000]" />
-                <div className="w-3 h-4 bg-[#F2F2F2] border-2 border-black" />
-              </div>
-            ) : (
-              <div className="flex items-center gap-0.5">
-                <div className={`w-1.5 h-7 ${themeClasses.accent.replace('text-', 'bg-')} rounded-full opacity-90`} />
-                <div className={`w-1.5 h-5 ${themeClasses.accent.replace('text-', 'bg-')} rounded-full opacity-60`} />
-                <div className={`w-1.5 h-3 ${themeClasses.accent.replace('text-', 'bg-')} rounded-full opacity-30`} />
-              </div>
-            )}
-            <div>
-              <h1 className={`text-xl lg:text-2xl font-bold tracking-tight ${isSwiss ? (isSwissDark ? "text-2xl lg:text-3xl font-bold text-[#F9FAFB]" : "text-2xl lg:text-3xl font-bold text-[#111827]") : isConfetti ? "text-2xl lg:text-3xl font-bold text-[#1E293B]" : themeName === "napkin" ? "text-2xl lg:text-3xl font-bold text-[#2d2d2d] font-[var(--font-kalam)]" : isMinimalist ? "text-3xl lg:text-4xl font-black text-black uppercase tracking-tight" : "text-white"}`}>
-                {theme.typography.logoText}
-              </h1>
-              <p className={`text-[11px] ${themeClasses.muted}`}>Caltrain Tracker</p>
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-2">
-              {dataSource && <LiveStatusBadge dataSource={dataSource} size="sm" />}
-              <JourneyThemeSwitcher />
-              <ServiceAlertsBanner />
-            </div>
-            {lastUpdated && <span className={`text-[9px] ${themeClasses.muted}`}>Last updated at {lastUpdated.toLocaleTimeString()}</span>}
-          </div>
-        </div>
-
+        <JourneyHeader dataSource={dataSource} lastUpdated={lastUpdated} />
 
         {/* Route Selection */}
-        <div className={`${isSwiss ? (isSwissDark ? "bg-[#1F2937] rounded-xl border border-[#374151]" : "bg-white rounded-xl shadow-sm border border-[#E5E7EB]") : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-2xl shadow-[6px_6px_0px_0px_#E2E8F0]" : themeName === "napkin" ? "bg-white border-[3px] border-[#2d2d2d] shadow-[6px_6px_0px_0px_#2d2d2d]" : isMinimalist ? "bg-white border-4 border-black" : `${themeClasses.card} rounded-2xl border backdrop-blur-sm`} p-4 mb-6 relative overflow-hidden`} style={themeName === "napkin" ? { borderRadius: SKETCH.wobblyMd } : isMinimalist ? { borderRadius: 0 } : undefined}>
-          {isSwiss && <div className="absolute top-0 left-0 w-1.5 h-full bg-[#E31837] rounded-l-xl" />}
-          {isMinimalist && <div className="absolute top-0 left-0 w-2 h-full bg-[#FF3000]" />}
+        <div 
+          className={`${theme.classes.card} p-4 mb-6 relative overflow-hidden`}
+          style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblyMd : theme.styles.borderRadius }}
+        >
+          {/* Left accent bar */}
+          {(isSwiss || isMinimalist) && (
+            <div 
+              className="absolute top-0 left-0 w-1.5 h-full"
+              style={{ backgroundColor: theme.raw.accent.primary, borderRadius: isSwiss ? `${theme.styles.borderRadius} 0 0 ${theme.styles.borderRadius}` : 0 }}
+            />
+          )}
           
+          {/* Station Selectors */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3 lg:gap-4 relative">
             <div className="flex-1 min-w-0">
-              <label className={`text-[10px] ${themeClasses.muted} uppercase tracking-widest font-medium mb-1.5 block`}>From</label>
+              <label className={`text-[10px] ${theme.classes.textMuted} uppercase tracking-widest font-medium mb-1.5 block`}>From</label>
               <Select value={origin} onValueChange={(v) => { setOrigin(v); setExpandedJourney(null); }}>
-                <SelectTrigger className={`w-full ${isSwiss ? "h-11 bg-white border-2 border-[#E5E7EB] text-[#111827] font-medium rounded-md" : isConfetti ? "h-11 border-2 border-[#1E293B] bg-white text-[#1E293B] font-medium rounded-xl shadow-[3px_3px_0px_0px_#1E293B]" : isMinimalist ? "h-11 bg-white border-2 border-black text-black font-bold rounded-none" : `${themeClasses.input} text-sm h-9`}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+                <SelectTrigger 
+                  className={`w-full h-11 ${theme.classes.input} font-medium`}
+                  style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : undefined }}
+                >
                   <SelectValue placeholder="Origin" />
                 </SelectTrigger>
-                <SelectContent className={`${isSwiss ? "bg-white border-2 border-[#E5E7EB] rounded-md" : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-xl" : isMinimalist ? "bg-white border-4 border-black rounded-none" : "bg-gray-800 border-gray-700"}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+                <SelectContent 
+                  className={theme.classes.card}
+                  style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : undefined }}
+                >
                   {stations.map((s) => (
                     <SelectItem key={s.stop1} value={s.stopname} disabled={s.stopname === destination}>{s.stopname}</SelectItem>
                   ))}
@@ -1556,17 +1140,28 @@ export default function CleanJourneyView() {
               </Select>
             </div>
             
-            <button onClick={handleSwap} className={`self-center sm:self-auto flex-shrink-0 ${isSwiss ? "w-11 h-11 bg-[#E31837] rounded-md hover:bg-[#C41230]" : isConfetti ? "w-11 h-11 bg-[#F472B6] border-2 border-[#1E293B] rounded-full shadow-[3px_3px_0px_0px_#1E293B]" : isMinimalist ? "w-11 h-11 bg-black text-white border-2 border-black hover:bg-[#FF3000]" : `p-2.5 rounded-xl ${themeClasses.card} border`} transition-all hover:scale-105 flex items-center justify-center`} style={isMinimalist ? { borderRadius: 0 } : undefined} aria-label="Swap stations">
-              <ArrowLeftRight className={`w-4 h-4 ${isSwiss || isConfetti || isMinimalist ? "text-white" : themeClasses.muted}`} />
+            <button 
+              onClick={handleSwap} 
+              className={`self-center sm:self-auto flex-shrink-0 w-11 h-11 ${theme.classes.buttonPrimary} transition-all hover:scale-105 flex items-center justify-center`}
+              style={{ borderRadius: isMinimalist ? 0 : undefined }}
+              aria-label="Swap stations"
+            >
+              <ArrowLeftRight className="w-4 h-4 text-white" />
             </button>
             
             <div className="flex-1 min-w-0">
-              <label className={`text-[10px] ${themeClasses.muted} uppercase tracking-widest font-medium mb-1.5 block`}>To</label>
+              <label className={`text-[10px] ${theme.classes.textMuted} uppercase tracking-widest font-medium mb-1.5 block`}>To</label>
               <Select value={destination} onValueChange={(v) => { setDestination(v); setExpandedJourney(null); }}>
-                <SelectTrigger className={`w-full ${isSwiss ? "h-11 bg-white border-2 border-[#E5E7EB] text-[#111827] font-medium rounded-md" : isConfetti ? "h-11 border-2 border-[#1E293B] bg-white text-[#1E293B] font-medium rounded-xl shadow-[3px_3px_0px_0px_#1E293B]" : isMinimalist ? "h-11 bg-white border-2 border-black text-black font-bold rounded-none" : `${themeClasses.input} text-sm h-9`}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+                <SelectTrigger 
+                  className={`w-full h-11 ${theme.classes.input} font-medium`}
+                  style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : undefined }}
+                >
                   <SelectValue placeholder="Destination" />
                 </SelectTrigger>
-                <SelectContent className={`${isSwiss ? "bg-white border-2 border-[#E5E7EB] rounded-md" : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-xl" : isMinimalist ? "bg-white border-4 border-black rounded-none" : "bg-gray-800 border-gray-700"}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+                <SelectContent 
+                  className={theme.classes.card}
+                  style={{ borderRadius: isMinimalist ? 0 : isNapkin ? NAPKIN_BORDERS.wobblySm : undefined }}
+                >
                   {stations.map((s) => (
                     <SelectItem key={s.stop1} value={s.stopname} disabled={s.stopname === origin}>{s.stopname}</SelectItem>
                   ))}
@@ -1584,77 +1179,61 @@ export default function CleanJourneyView() {
               setDestination(d);
               setExpandedJourney(null);
             }}
-            themeName={themeName}
+            theme={theme}
             showFeedback={showFeedback}
           />
           
           {/* Time Filter Controls */}
-          <div className={`mt-4 pt-4 border-t ${isSwiss ? "border-[#E31837]/20" : isConfetti ? "border-[#E2E8F0]" : isMinimalist ? "border-black border-t-2" : "border-white/[0.06]"}`}>
+          <div 
+            className="mt-4 pt-4"
+            style={{ borderTop: `1px solid ${theme.raw.border.primary}` }}
+          >
             <div className="flex flex-wrap items-center gap-4">
-              <TimeFilterSelector value={timeFilterMode} onChange={(mode) => { setTimeFilterMode(mode); setExpandedJourney(null); }} themeName={themeName} />
-              {timeFilterMode !== 'depart_now' && <TimePicker value={targetTime} onChange={(time) => { setTargetTime(time); setExpandedJourney(null); }} themeName={themeName} />}
+              <TimeFilterSelector 
+                value={timeFilterMode} 
+                onChange={(mode) => { setTimeFilterMode(mode); setExpandedJourney(null); }} 
+              />
+              {timeFilterMode !== 'depart_now' && (
+                <TimePicker 
+                  value={targetTime} 
+                  onChange={(time) => { setTargetTime(time); setExpandedJourney(null); }} 
+                />
+              )}
               
               {/* Train Type Filter Badges */}
-              <div className="flex items-center gap-2 ml-auto">
-                <span className={`text-xs ${themeClasses.muted} mr-1`}>Show:</span>
-                {(['Local', 'Limited', 'Bullet'] as const).map((trainType) => {
-                  const isEnabled = trainTypeFilters[trainType];
-                  const getColors = () => {
-                    if (isSwiss) {
-                      switch (trainType) {
-                        case 'Bullet': return { active: 'bg-[#EF4444] text-white', inactive: 'bg-[#F3F4F6] text-[#6B7280]' };
-                        case 'Limited': return { active: 'bg-[#F59E0B] text-[#111827]', inactive: 'bg-[#F3F4F6] text-[#6B7280]' };
-                        default: return { active: 'bg-[#3B82F6] text-white', inactive: 'bg-[#F3F4F6] text-[#6B7280]' };
-                      }
-                    }
-                    if (isConfetti) {
-                      switch (trainType) {
-                        case 'Bullet': return { active: 'bg-[#F472B6] text-white border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]', inactive: 'bg-white text-[#64748B] border-[#E2E8F0]' };
-                        case 'Limited': return { active: 'bg-[#FBBF24] text-[#1E293B] border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]', inactive: 'bg-white text-[#64748B] border-[#E2E8F0]' };
-                        default: return { active: 'bg-[#8B5CF6] text-white border-[#1E293B] shadow-[2px_2px_0px_0px_#1E293B]', inactive: 'bg-white text-[#64748B] border-[#E2E8F0]' };
-                      }
-                    }
-                    if (isMinimalist) {
-                      switch (trainType) {
-                        case 'Bullet': return { active: 'bg-[#FF3000] text-white border-black', inactive: 'bg-white text-[#666666] border-black' };
-                        case 'Limited': return { active: 'bg-black text-white border-black', inactive: 'bg-white text-[#666666] border-black' };
-                        default: return { active: 'bg-[#F2F2F2] text-black border-black', inactive: 'bg-white text-[#666666] border-black' };
-                      }
-                    }
-                    switch (trainType) {
-                      case 'Bullet': return { active: 'bg-rose-500/30 text-rose-400 border-rose-500/50', inactive: 'bg-white/5 text-white/40 border-white/10' };
-                      case 'Limited': return { active: 'bg-amber-500/30 text-amber-400 border-amber-500/50', inactive: 'bg-white/5 text-white/40 border-white/10' };
-                      default: return { active: 'bg-blue-500/30 text-blue-400 border-blue-500/50', inactive: 'bg-white/5 text-white/40 border-white/10' };
-                    }
-                  };
-                  const typeColors = getColors();
-                  return (
-                    <button key={trainType} onClick={() => toggleTrainType(trainType)} className={`px-3 py-1.5 text-xs font-medium border transition-all duration-150 ${isEnabled ? typeColors.active : typeColors.inactive} ${isConfetti ? 'border-2 font-bold rounded-full' : isMinimalist ? 'border-2 uppercase tracking-widest font-bold' : 'rounded-full'} ${!isEnabled ? 'opacity-60' : ''}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
-                      {trainType}
-                    </button>
-                  );
-                })}
-              </div>
+              <TrainTypeFilter filters={trainTypeFilters} onToggle={toggleTrainType} />
             </div>
           </div>
         </div>
 
-
         {/* Loading State */}
         {loading && journeys.length === 0 && (
-          <div className={`text-center py-8 ${themeClasses.muted} ${isSwiss ? (isSwissDark ? "bg-[#374151] rounded-lg" : "bg-[#F3F4F6] rounded-lg") : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-2xl shadow-[6px_6px_0px_0px_#E2E8F0]" : isMinimalist ? "bg-white border-2 border-black" : ""}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
-            <RefreshCw className={`w-6 h-6 animate-spin mx-auto mb-2 ${isSwiss ? (isSwissDark ? "text-[#F87171]" : "text-[#E31837]") : isConfetti ? "text-[#8B5CF6]" : isMinimalist ? "text-[#FF3000]" : ""}`} />
+          <div 
+            className={`text-center py-8 ${theme.classes.textMuted} ${theme.classes.card}`}
+            style={{ borderRadius: isMinimalist ? 0 : theme.styles.borderRadius }}
+          >
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" style={{ color: theme.raw.accent.primary }} />
             <span>Finding trains...</span>
           </div>
         )}
 
         {/* Error Message */}
         {fetchError && !loading && (
-          <div className={`text-center py-6 px-4 ${isSwiss ? "bg-[#FEF2F2] rounded-lg" : isConfetti ? "bg-white border-2 border-[#F472B6] rounded-2xl" : isMinimalist ? "bg-white border-2 border-black" : "bg-rose-500/10 border border-rose-500/20 rounded-xl"}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+          <div 
+            className={`text-center py-6 px-4 ${theme.classes.card}`}
+            style={{ 
+              borderRadius: isMinimalist ? 0 : theme.styles.borderRadius,
+              borderColor: theme.raw.accent.error
+            }}
+          >
             <div className="text-2xl mb-2">🚂</div>
-            <p className={`font-medium mb-1 ${isSwiss ? "text-[#991B1B]" : isConfetti ? "text-[#1E293B] font-bold" : "text-rose-400"}`}>Connection hiccup</p>
-            <p className={`text-sm mb-4 ${isSwiss ? "text-[#B91C1C]" : isConfetti ? "text-[#64748B]" : "text-rose-300/80"}`}>{fetchError}</p>
-            <button onClick={() => { setFetchError(null); fetchJourneys(); }} className={`text-sm px-4 py-2 ${isSwiss ? "bg-[#E31837] text-white font-medium rounded-md" : isConfetti ? "bg-[#8B5CF6] border-2 border-[#1E293B] rounded-full font-bold text-white" : "bg-white/10 text-white rounded-lg"} transition-all`}>
+            <p className="font-medium mb-1" style={{ color: theme.raw.accent.error }}>Connection hiccup</p>
+            <p className={`text-sm mb-4 ${theme.classes.textMuted}`}>{fetchError}</p>
+            <button 
+              onClick={() => { setFetchError(null); fetchJourneys(); }} 
+              className={`text-sm px-4 py-2 text-white transition-all`}
+              style={{ backgroundColor: theme.raw.accent.primary, borderRadius: theme.styles.borderRadius }}
+            >
               Try again
             </button>
           </div>
@@ -1662,30 +1241,40 @@ export default function CleanJourneyView() {
 
         {/* No Trains */}
         {!loading && origin && destination && origin !== destination && journeys.length === 0 && (
-          <div className={`text-center py-8 ${isSwiss ? "bg-[#F3F4F6] rounded-lg p-6" : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-2xl p-6" : `${themeClasses.card} rounded-xl border p-6`} ${themeClasses.muted}`}>
-            <Train className={`w-8 h-8 mx-auto mb-2 opacity-50`} />
-            <p className={isSwiss ? "font-semibold text-[#111827]" : isConfetti ? "font-bold text-[#1E293B]" : ""}>No trains found for this route</p>
-            <button onClick={handleSwap} className={`mt-3 text-xs px-3 py-1.5 ${isSwiss ? "bg-[#E31837] text-white font-medium rounded-md" : isConfetti ? "bg-[#FBBF24] border-2 border-[#1E293B] rounded-full font-bold text-[#1E293B]" : `rounded ${themeClasses.card} border`} transition-all`}>
+          <div 
+            className={`text-center py-8 p-6 ${theme.classes.card} ${theme.classes.textMuted}`}
+            style={{ borderRadius: isMinimalist ? 0 : theme.styles.borderRadius }}
+          >
+            <Train className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className={`font-semibold ${theme.classes.textPrimary}`}>No trains found for this route</p>
+            <button 
+              onClick={handleSwap} 
+              className={`mt-3 text-xs px-3 py-1.5 text-white transition-all`}
+              style={{ backgroundColor: theme.raw.accent.primary, borderRadius: theme.styles.borderRadius }}
+            >
               Try {destination} → {origin} instead
             </button>
           </div>
         )}
 
-
-        {/* Main Content - Single Column Full Width Accordion */}
+        {/* Main Content - Expandable Train Cards */}
         {journeys.length > 0 && (
           <div className="space-y-3">
             {/* Section header */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                {isSwiss && <div className="w-1.5 h-5 bg-gradient-to-b from-[#E31837] to-[#22C55E] rounded-full" />}
-                {isConfetti && <div className="w-2 h-5 bg-[#8B5CF6] border border-[#1E293B] rounded-full shadow-[1px_1px_0px_0px_#1E293B]" />}
-                {isMinimalist && <div className="w-1 h-6 bg-[#FF3000]" />}
-                <h2 className={`text-sm font-semibold ${isSwiss ? (isSwissDark ? "text-lg font-bold text-[#F9FAFB]" : "text-lg font-bold text-[#111827]") : isConfetti ? "text-lg font-bold text-[#1E293B]" : isMinimalist ? "text-lg font-black text-black uppercase tracking-wider" : "text-gray-300"} tracking-wide`}>
+                <div 
+                  className="w-1.5 h-5"
+                  style={{ 
+                    background: `linear-gradient(to bottom, ${theme.raw.accent.primary}, ${theme.raw.accent.success})`,
+                    borderRadius: "9999px"
+                  }}
+                />
+                <h2 className={`text-lg font-bold ${theme.classes.textPrimary} tracking-wide`}>
                   Departures
                 </h2>
               </div>
-              <span className={`text-xs ${themeClasses.muted}`}>
+              <span className={`text-xs ${theme.classes.textMuted}`}>
                 {filteredJourneys.length} train{filteredJourneys.length !== 1 ? 's' : ''} • Click to expand
               </span>
             </div>
@@ -1702,28 +1291,36 @@ export default function CleanJourneyView() {
                 destination={destination}
                 isRealtime={isRealtime}
                 hasETAChanged={changedTrainIds.has(journey.tripId)}
-                themeName={themeName}
                 timeFilterMode={timeFilterMode}
               />
             ))}
             
             {/* Load more button */}
             {hasMoreTrains && (
-              <button onClick={handleLoadMore} className={`w-full text-center text-xs ${themeClasses.muted} py-2 flex items-center justify-center gap-1 ${isSwiss ? "bg-[#F3F4F6] text-[#111827] font-medium rounded-md py-2.5" : isConfetti ? "bg-white border-2 border-[#1E293B] rounded-full font-bold text-[#1E293B] shadow-[3px_3px_0px_0px_#1E293B] py-2.5" : isMinimalist ? "bg-[#F2F2F2] text-black font-bold uppercase tracking-widest border-2 border-black py-2.5" : ""}`} style={isMinimalist ? { borderRadius: 0 } : undefined}>
+              <button 
+                onClick={handleLoadMore} 
+                className={`w-full text-center text-xs py-2.5 flex items-center justify-center gap-1 ${theme.classes.buttonSecondary}`}
+                style={{ borderRadius: isMinimalist ? 0 : theme.styles.borderRadius }}
+              >
                 <ChevronDown className="w-3 h-3" />
                 <span>Show {Math.min(LOAD_MORE_COUNT, remainingCount)} more train{Math.min(LOAD_MORE_COUNT, remainingCount) !== 1 ? "s" : ""}</span>
-                <span className={`ml-1 opacity-60`}>({remainingCount} remaining)</span>
+                <span className="ml-1 opacity-60">({remainingCount} remaining)</span>
               </button>
             )}
             
             {!hasMoreTrains && journeys.length > INITIAL_TRAINS_COUNT && (
-              <div className={`text-center py-2 text-xs ${themeClasses.muted}`}>All {filteredJourneys.length} trains loaded</div>
+              <div className={`text-center py-2 text-xs ${theme.classes.textMuted}`}>
+                All {filteredJourneys.length} trains loaded
+              </div>
             )}
           </div>
         )}
 
-        <div className={`text-center text-[10px] ${themeClasses.muted} pt-6 mt-4 ${isSwiss ? "border-t border-[#E5E7EB] font-medium" : isConfetti ? "border-t-2 border-[#E2E8F0] font-medium" : ""}`}>
-          <span className={isSwiss ? "text-[#E31837]" : isConfetti ? "text-[#8B5CF6]" : themeClasses.accent}>●</span> Auto-refreshes every 30 seconds
+        <div 
+          className={`text-center text-[10px] ${theme.classes.textMuted} pt-6 mt-4`}
+          style={{ borderTop: `1px solid ${theme.raw.border.primary}` }}
+        >
+          <span style={{ color: theme.raw.accent.primary }}>●</span> Auto-refreshes every 30 seconds
         </div>
       </div>
       
