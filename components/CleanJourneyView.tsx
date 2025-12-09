@@ -532,9 +532,10 @@ interface JourneyDetailsProps {
   destination: string;
   origin: string;
   isRealtime: boolean;
+  onOriginETAUpdate?: (tripId: string, newEtaMinutes: number | null, newPredictedTime: string) => void;
 }
 
-function JourneyDetails({ journey, destination, origin, isRealtime }: JourneyDetailsProps) {
+function JourneyDetails({ journey, destination, origin, isRealtime, onOriginETAUpdate }: JourneyDetailsProps) {
   const { theme, themeName } = useTheme();
   const isNapkin = themeName === "napkin";
   const isMinimalist = themeName === "minimalist";
@@ -546,15 +547,23 @@ function JourneyDetails({ journey, destination, origin, isRealtime }: JourneyDet
   const [segment, setSegment] = useState<{ from: string; to: string; progress: number } | null>(null);
   const lastSegmentRef = useRef<{ from: string; to: string; progress: number } | null>(null);
   
-  // Fetch stops
+  // Fetch stops and sync origin ETA with parent
   const fetchStops = useCallback(async () => {
     try {
       const response = await fetch(`/api/trains/${journey.tripId}`);
       const data: TrainDetailsResponse = await response.json();
-      if (response.ok && data.trip?.stops) setStops(data.trip.stops);
+      if (response.ok && data.trip?.stops) {
+        setStops(data.trip.stops);
+        
+        // Sync origin ETA with parent to keep header timer accurate
+        const originStop = data.trip.stops.find(s => s.stopName === origin);
+        if (originStop && onOriginETAUpdate) {
+          onOriginETAUpdate(journey.tripId, originStop.etaMinutes, originStop.predictedTime);
+        }
+      }
     } catch (err) { console.error("Failed to fetch stops:", err); }
     finally { setLoadingStops(false); }
-  }, [journey.tripId]);
+  }, [journey.tripId, origin, onOriginETAUpdate]);
   
   // Fetch GPS position
   const fetchPosition = useCallback(async () => {
@@ -778,10 +787,11 @@ interface ExpandableTrainCardProps {
   isRealtime: boolean;
   hasETAChanged?: boolean;
   timeFilterMode?: TimeFilterModeOption;
+  onOriginETAUpdate?: (tripId: string, newEtaMinutes: number | null, newPredictedTime: string) => void;
 }
 
 const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCardProps>(
-  ({ journey, isExpanded, onToggle, origin, destination, isRealtime, hasETAChanged, timeFilterMode }, ref) => {
+  ({ journey, isExpanded, onToggle, origin, destination, isRealtime, hasETAChanged, timeFilterMode, onOriginETAUpdate }, ref) => {
     const { theme, themeName } = useTheme();
     const isNapkin = themeName === "napkin";
     const isMinimalist = themeName === "minimalist";
@@ -836,6 +846,7 @@ const ExpandableTrainCard = React.forwardRef<HTMLDivElement, ExpandableTrainCard
             origin={origin}
             destination={destination}
             isRealtime={isRealtime}
+            onOriginETAUpdate={onOriginETAUpdate}
           />
         </div>
       </div>
@@ -933,6 +944,23 @@ export default function CleanJourneyView() {
     setVisibleTrainsCount(prev => Math.min(prev + LOAD_MORE_COUNT, journeys.length));
     showFeedback(`Loaded ${LOAD_MORE_COUNT} more trains`);
   }, [journeys.length, showFeedback]);
+  
+  // Sync origin ETA from expanded card's stops data (more frequent updates)
+  const handleOriginETAUpdate = useCallback((tripId: string, newEtaMinutes: number | null, newPredictedTime: string) => {
+    setJourneys(prev => prev.map(j => {
+      if (j.tripId !== tripId) return j;
+      // Only update if ETA actually changed
+      if (j.origin.etaMinutes === newEtaMinutes) return j;
+      return {
+        ...j,
+        origin: {
+          ...j.origin,
+          etaMinutes: newEtaMinutes,
+          predictedTime: newPredictedTime,
+        }
+      };
+    }));
+  }, []);
   
   const toggleTrainType = useCallback((trainType: string) => {
     setTrainTypeFilters(prev => {
@@ -1292,6 +1320,7 @@ export default function CleanJourneyView() {
                 isRealtime={isRealtime}
                 hasETAChanged={changedTrainIds.has(journey.tripId)}
                 timeFilterMode={timeFilterMode}
+                onOriginETAUpdate={handleOriginETAUpdate}
               />
             ))}
             
